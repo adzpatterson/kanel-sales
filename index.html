@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanel Sales Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0f1117;--sf:#1a1d27;--sf2:#232733;--bd:#2e3344;--tx:#e4e6f0;--txm:#8b8fa3;--txd:#5c6070;--ac:#c8a45a;--acl:#e0c97a;--acd:rgba(200,164,90,.12);--gn:#4ade80;--gnd:rgba(74,222,128,.12);--rd:#f87171;--rdd:rgba(248,113,113,.12);--bl:#60a5fa;--bld:rgba(96,165,250,.12);--or:#fb923c;--ord:rgba(251,146,60,.12);--pu:#a78bfa;--pud:rgba(167,139,250,.12)}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+.app{display:flex;min-height:100vh}.sidebar{width:240px;background:var(--sf);border-right:1px solid var(--bd);padding:24px 16px;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50}
+.main{margin-left:240px;flex:1;padding:32px;max-width:calc(100vw - 240px)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;padding:0 8px}.logo-mark{width:32px;height:32px;background:var(--ac);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--bg)}.logo-text{font-size:15px;font-weight:600;letter-spacing:.5px}.logo-sub{font-size:11px;color:var(--txm)}
+.nav-section{margin-bottom:24px}.nav-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--txd);padding:0 12px;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txm);transition:all .15s;margin-bottom:2px}.nav-item:hover{background:var(--sf2);color:var(--tx)}.nav-item.active{background:var(--acd);color:var(--ac);font-weight:500}.nav-icon{width:18px;text-align:center;font-size:14px}
+.cs{padding:12px;border-radius:8px;background:var(--sf2);font-size:11px;position:absolute;bottom:16px;left:16px;right:16px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}.dot.on{background:var(--gn);box-shadow:0 0 6px var(--gn)}.dot.off{background:var(--rd)}
+.page-header{margin-bottom:28px}.page-title{font-size:24px;font-weight:700;margin-bottom:4px}.page-sub{font-size:13px;color:var(--txm)}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px}.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.card-t{font-size:14px;font-weight:600}
+.kg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}.kpi{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:16px 18px}.kpi-l{font-size:11px;color:var(--txm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}.kpi-v{font-size:26px;font-weight:700;line-height:1.1}.kpi-c{font-size:12px;margin-top:4px}.kpi-c.up{color:var(--gn)}.kpi-c.dn{color:var(--rd)}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}table.dt th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--txm);background:var(--sf2);border-bottom:1px solid var(--bd)}table.dt td{padding:10px 14px;border-bottom:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}table.dt tr:hover td{background:var(--sf2)}table.dt .n{text-align:right;font-variant-numeric:tabular-nums}.pos{color:var(--gn)}.neg{color:var(--rd)}
+.cr{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}.b-d{background:var(--bld);color:var(--bl)}.b-g{background:var(--gnd);color:var(--gn)}.b-w{background:var(--pud);color:var(--pu)}.b-m{background:var(--ord);color:var(--or)}.b-c{background:var(--acd);color:var(--ac)}
+.xb{background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;color:var(--txm);font-family:inherit;font-size:11px;cursor:pointer}.xb:hover{border-color:var(--ac);color:var(--ac)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center}.mo-c{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:32px;width:420px;max-width:90vw}.mo-c h2{font-size:18px;font-weight:700;margin-bottom:4px}.mo-c p{font-size:13px;color:var(--txm);margin-bottom:20px}.mo-c label{display:block;font-size:12px;font-weight:500;margin-bottom:6px;color:var(--txm)}.mo-c input{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;color:var(--tx);font-family:inherit;font-size:14px;margin-bottom:16px;outline:none}.mo-c input:focus{border-color:var(--ac)}
+.btn{background:var(--ac);color:var(--bg);border:none;border-radius:8px;padding:10px 20px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}.btn:hover{background:var(--acl)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.err{color:var(--rd);font-size:12px;margin-bottom:12px;display:none}
+.lo{position:fixed;inset:0;background:rgba(15,17,23,.9);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center}.sp{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.lt{margin-top:16px;font-size:14px;color:var(--txm)}.lp{margin-top:8px;font-size:12px;color:var(--txd)}
+.hidden{display:none!important}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:16px;max-width:100vw}.cr{grid-template-columns:1fr}.kg{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+<div class="logo"><div class="logo-mark">K</div><div><div class="logo-text">KANEL</div><div class="logo-sub">Sales Hub</div></div></div>
+<div class="nav-section"><div class="nav-label">Overview</div><div class="nav-item active" data-page="dash"><span class="nav-icon">◉</span> Dashboard</div></div>
+<div class="nav-section"><div class="nav-label">Non-Negotiable</div>
+<div class="nav-item" data-page="chan"><span class="nav-icon">◆</span> Revenue by Channel</div>
+<div class="nav-item" data-page="prod"><span class="nav-icon">◆</span> Revenue by Product</div>
+<div class="nav-item" data-page="sku"><span class="nav-icon">◆</span> Top / Bottom SKUs</div>
+<div class="nav-item" data-page="yoy"><span class="nav-icon">◆</span> YoY Comparison</div></div>
+<div class="nav-section"><div class="nav-label">Critical</div>
+<div class="nav-item" data-page="ws"><span class="nav-icon">◇</span> Wholesale Accounts</div>
+<div class="nav-item" data-page="mix"><span class="nav-icon">◇</span> Channel Mix Trend</div></div>
+<div class="nav-section"><div class="nav-label">Tools</div>
+<div class="nav-item" data-page="dq"><span class="nav-icon">⚙</span> Data Quality</div>
+<div class="nav-item" onclick="showMo()"><span class="nav-icon">⟳</span> Reconnect</div></div>
+<div class="cs" id="cs"><span class="dot off" id="csd"></span><span id="cst">Not connected</span></div>
+</nav>
+<div class="main" id="M"></div>
+</div>
+<div class="mo" id="modal"><div class="mo-c"><h2>Connect to Fishbowl</h2><p>Enter your Fishbowl API credentials to load sales data.</p><div class="err" id="err"></div><label>Server URL</label><input id="iU" value="http://kanel.myfishbowl.com:4111"><label>Username</label><input id="iN" value="api-kanel"><label>Password</label><input type="password" id="iP"><label>App ID</label><input id="iA" value="9274"><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="bC" onclick="doConn()">Connect & Load Data</button></div></div></div>
+<div class="lo hidden" id="loader"><div class="sp"></div><div class="lt" id="lT">Connecting...</div><div class="lp" id="lP"></div></div>
+
+<script>
+const S={token:null,url:'',rC:[],rM:[],rP:[],rCY:[],C:[],M:[],P:[],CY:[],Y:[],lr:null,pg:'dash'};
+const TX={
+mg:{'Loblaws Inc':'Loblaws Inc.','Loblaws (sales)':'Loblaws Inc.','Metro Richelieu Inc. / ECOM MTL  #22132':'Metro Richelieu Inc. / ECOM MTL #22132'},
+cl(n){const l=n.toLowerCase();if(l.includes('shopify'))return'DTC';if(['loblaws','sobeys','metro','iga','maxi','provigo','avril','community natural','summerhill','purity life','rachelle','whole foods'].some(k=>l.includes(k)))return'Grocery';if(['well.ca','faire','shop moi','indigo','amazon'].some(k=>l.includes(k)))return'Marketplace';if(['corporate','peter and paul','biomed','corby','inspira','marketing kitchen','acart','addimpact','aevias','terra corporate','fairmont','hotel','remax','donovan','financiere','financière','tourisme','gilles lafleur','parisien construction','adams wealth'].some(k=>l.includes(k)))return'Corporate';return'Wholesale'},
+ex:new Set(['','Shopify Shipping','Shipping','Discount','Marketing Discount','Corporate discount','Additional discount','AvrilDiscount','Avril_Discount','Avril_Discount2']),
+isEx(pn,d){return this.ex.has(pn)||d==='Subtotal'},
+mn(n){return this.mg[n]||n},
+tC(r){const m={};for(const x of r){const n=this.mn(x.customer);if(!m[n])m[n]={customer:n,orders:0,revenue:0,channel:this.cl(n)};m[n].orders+=x.orders;m[n].revenue+=x.revenue}return Object.values(m).sort((a,b)=>b.revenue-a.revenue)},
+tCY(r){const m={};for(const x of r){const n=this.mn(x.customer),k=n+'|'+x.yr;if(!m[k])m[k]={customer:n,yr:x.yr,orders:0,revenue:0,channel:this.cl(n)};m[k].orders+=x.orders;m[k].revenue+=x.revenue}return Object.values(m).sort((a,b)=>b.revenue-a.revenue)},
+tP(r){return r.filter(x=>!this.isEx(x.productNum,x.description))}
+};
+
+async function fbL(u,n,p,a){const r=await fetch(u+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appName:'KanelSupplyChain',appDescription:'Kanel Supply Chain Integration',appId:parseInt(a),username:n,password:p})});const d=await r.json();if(d.token)return d.token;throw new Error(d.message||'Login failed')}
+async function fbO(u,t){try{await fetch(u+'/api/logout',{method:'POST',headers:{Authorization:'Bearer '+t}})}catch(e){}}
+async function fbQ(u,t,q,retries=3){for(let i=0;i<retries;i++){try{const r=await fetch(u+'/api/data-query?'+new URLSearchParams({query:q}),{headers:{Authorization:'Bearer '+t}});if(r.status===401){const c=gC();if(c){S.token=await fbL(u,c.user,c.pass,c.appId);t=S.token;continue}throw new Error('Auth expired')}const x=await r.text();if(!x||!x.trim())return[];return JSON.parse(x)}catch(e){if(i===retries-1)throw e;await new Promise(r=>setTimeout(r,1500))}}}
+function gC(){try{return JSON.parse(localStorage.getItem('kfb_c'))}catch(e){return null}}
+
+async function loadAll(){const u=S.url,t=S.token,p=m=>{document.getElementById('lP').textContent=m};
+p('Monthly revenue...');S.rM=await fbQ(u,t,"SELECT YEAR(so.dateCompleted) as yr,MONTH(so.dateCompleted) as mo,COUNT(DISTINCT so.id) as orders,SUM(so.totalPrice) as revenue FROM so WHERE so.dateCompleted>='2024-01-01' AND so.statusId>=60 GROUP BY YEAR(so.dateCompleted),MONTH(so.dateCompleted) ORDER BY yr,mo");S.M=S.rM;
+p('Customer data...');S.rC=await fbQ(u,t,"SELECT c.name as customer,COUNT(so.id) as orders,SUM(so.totalPrice) as revenue FROM so JOIN customer c ON so.customerId=c.id WHERE so.dateCompleted>='2024-01-01' AND so.statusId>=60 GROUP BY c.name ORDER BY revenue DESC");S.C=TX.tC(S.rC);
+p('Yearly breakdown...');S.rCY=await fbQ(u,t,"SELECT c.name as customer,YEAR(so.dateCompleted) as yr,SUM(so.totalPrice) as revenue,COUNT(so.id) as orders FROM so JOIN customer c ON so.customerId=c.id WHERE so.dateCompleted>='2024-01-01' AND so.statusId>=60 GROUP BY c.name,YEAR(so.dateCompleted) ORDER BY revenue DESC");S.CY=TX.tCY(S.rCY);
+p('Product data...');S.rP=await fbQ(u,t,"SELECT soi.productNum,soi.description,SUM(soi.totalPrice) as revenue,SUM(soi.qtyOrdered) as qty,COUNT(DISTINCT soi.soId) as orderCount FROM soitem soi JOIN so ON soi.soId=so.id WHERE so.dateCompleted>='2024-01-01' AND so.statusId>=60 GROUP BY soi.productNum,soi.description ORDER BY revenue DESC LIMIT 200");S.P=TX.tP(S.rP);
+S.Y=[...new Set(S.M.map(r=>r.yr))].sort();S.lr=new Date();
+try{localStorage.setItem('kfb_d',JSON.stringify({ts:Date.now(),m:S.rM,c:S.rC,cy:S.rCY,p:S.rP}))}catch(e){}}
+
+function loadCa(){try{const c=JSON.parse(localStorage.getItem('kfb_d'));if(!c||Date.now()-c.ts>86400000)return false;S.rM=c.m;S.rC=c.c;S.rCY=c.cy;S.rP=c.p;S.M=S.rM;S.C=TX.tC(S.rC);S.CY=TX.tCY(S.rCY);S.P=TX.tP(S.rP);S.Y=[...new Set(S.M.map(r=>r.yr))].sort();S.lr=new Date(c.ts);return true}catch(e){return false}}
+
+async function doConn(){const u=document.getElementById('iU').value.replace(/\/+$/,''),n=document.getElementById('iN').value,p=document.getElementById('iP').value,a=document.getElementById('iA').value;
+if(!u||!n||!p){sE('Fill all fields');return}document.getElementById('bC').disabled=true;hide('modal');show('loader');document.getElementById('lT').textContent='Connecting...';
+try{S.token=await fbL(u,n,p,a);S.url=u;localStorage.setItem('kfb_c',JSON.stringify({url:u,user:n,pass:p,appId:a}));document.getElementById('lT').textContent='Loading sales data...';await loadAll();await fbO(u,S.token);sCS(1);hide('loader');render(S.pg)}catch(e){hide('loader');show('modal');sE(e.message||'Failed');document.getElementById('bC').disabled=false;sCS(0)}}
+
+function showMo(){show('modal');document.getElementById('bC').disabled=false;document.getElementById('err').style.display='none';const c=gC();if(c){document.getElementById('iU').value=c.url;document.getElementById('iN').value=c.user;document.getElementById('iA').value=c.appId}}
+function sE(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block'}
+function sCS(on){document.getElementById('csd').className='dot '+(on?'on':'off');document.getElementById('cst').textContent=on?'Connected · '+(S.lr?S.lr.toLocaleTimeString():''):'Not connected'}
+function show(id){document.getElementById(id).classList.remove('hidden')}
+function hide(id){document.getElementById(id).classList.add('hidden')}
+
+const F={$(v){return'$'+(v||0).toLocaleString('en-US',{maximumFractionDigits:0})},$k(v){return'$'+((v||0)/1000).toFixed(1)+'K'},p(v){return(v||0).toFixed(1)+'%'},n(v){return(v||0).toLocaleString()},mo(m){return['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]}};
+const CC={DTC:{c:'b-d',h:'#60a5fa'},Grocery:{c:'b-g',h:'#4ade80'},Wholesale:{c:'b-w',h:'#a78bfa'},Marketplace:{c:'b-m',h:'#fb923c'},Corporate:{c:'b-c',h:'#c8a45a'}};
+function bg(ch){return`<span class="badge ${CC[ch]?.c||''}">${ch}</span>`}
+
+function chSum(){const m={};for(const c of S.C){const ch=c.channel;if(!m[ch])m[ch]={channel:ch,revenue:0,orders:0,accounts:0};m[ch].revenue+=c.revenue;m[ch].orders+=c.orders;m[ch].accounts++}return Object.values(m).sort((a,b)=>b.revenue-a.revenue)}
+function chYr(){const m={};for(const r of S.CY){const k=r.channel+'|'+r.yr;if(!m[k])m[k]={channel:r.channel,yr:r.yr,revenue:0,orders:0};m[k].revenue+=r.revenue;m[k].orders+=r.orders}return Object.values(m)}
+function yrT(){const t={};for(const r of S.M){if(!t[r.yr])t[r.yr]={yr:r.yr,revenue:0,orders:0};t[r.yr].revenue+=r.revenue;t[r.yr].orders+=r.orders}return t}
+
+const PG={};
+
+PG.dash=function(){const t=yrT(),ch=chSum(),tr=S.C.reduce((s,c)=>s+c.revenue,0),yrs=Object.keys(t).sort(),lt=yrs[yrs.length-1],pv=yrs.length>1?yrs[yrs.length-2]:null,yoy=pv?((t[lt].revenue/t[pv].revenue-1)*100):0,now=S.M[S.M.length-1],sly=S.M.find(m=>m.yr===now.yr-1&&m.mo===now.mo),my=sly?((now.revenue/sly.revenue-1)*100):0;
+return`<div class="page-header"><div class="page-title">Sales Dashboard</div><div class="page-sub">Kanel Inc. · ${S.Y[0]}–present · Refreshed: ${S.lr?S.lr.toLocaleString():'N/A'}</div></div>
+<div class="kg">${yrs.map(y=>`<div class="kpi"><div class="kpi-l">${y} Revenue</div><div class="kpi-v">${F.$k(t[y].revenue)}</div><div class="kpi-c">${F.n(t[y].orders)} orders</div></div>`).join('')}
+<div class="kpi"><div class="kpi-l">${pv}→${lt} Growth</div><div class="kpi-v" style="color:${yoy>=0?'var(--gn)':'var(--rd)'}">${yoy>=0?'+':''}${F.p(yoy)}</div></div>
+<div class="kpi"><div class="kpi-l">Active Customers</div><div class="kpi-v">${S.C.length}</div></div>
+<div class="kpi"><div class="kpi-l">${F.mo(now.mo)} ${now.yr}</div><div class="kpi-v">${F.$k(now.revenue)}</div><div class="kpi-c ${my>=0?'up':'dn'}">${my>=0?'▲':'▼'} ${F.p(Math.abs(my))} vs ${F.mo(now.mo)} ${now.yr-1}</div></div></div>
+<div class="cr"><div class="card"><div class="card-hd"><div class="card-t">Monthly Revenue</div></div><canvas id="c1" height="260"></canvas></div>
+<div class="card"><div class="card-hd"><div class="card-t">Revenue by Channel</div></div><canvas id="c2" height="260"></canvas></div></div>
+<div class="card"><div class="card-hd"><div class="card-t">Channel Performance</div></div><table class="dt"><thead><tr><th>Channel</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">Orders</th><th class="n">Accounts</th><th class="n">Avg Order</th></tr></thead><tbody>${ch.map(c=>`<tr><td>${bg(c.channel)}</td><td class="n">${F.$(c.revenue)}</td><td class="n">${F.p(c.revenue/tr*100)}</td><td class="n">${F.n(c.orders)}</td><td class="n">${c.accounts}</td><td class="n">${F.$(c.revenue/c.orders)}</td></tr>`).join('')}</tbody></table></div>
+<div class="card"><div class="card-hd"><div class="card-t">Top 20 Customers</div><button class="xb" onclick="xT('t20')">Export</button></div><table class="dt" id="t20"><thead><tr><th>#</th><th>Customer</th><th>Channel</th><th class="n">Revenue</th><th class="n">Orders</th><th class="n">Avg</th></tr></thead><tbody>${S.C.slice(0,20).map((c,i)=>`<tr><td style="color:var(--txd)">${i+1}</td><td>${c.customer}</td><td>${bg(c.channel)}</td><td class="n">${F.$(c.revenue)}</td><td class="n">${F.n(c.orders)}</td><td class="n">${F.$(c.revenue/c.orders)}</td></tr>`).join('')}</tbody></table></div>`};
+
+PG.dashC=function(){const lb=S.M.map(r=>F.mo(r.mo)+' '+r.yr),d=S.M.map(r=>r.revenue),co=S.M.map(r=>['#60a5fa','#c8a45a','#4ade80','#a78bfa'][S.Y.indexOf(r.yr)%4]);
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:lb,datasets:[{data:d,backgroundColor:co.map(c=>c+'66'),borderColor:co,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>F.$(c.raw)}}},scales:{y:{ticks:{callback:v=>F.$k(v),color:'#5c6070'},grid:{color:'#2e3344'}},x:{ticks:{color:'#5c6070',maxRotation:45,font:{size:10}},grid:{display:false}}}}});
+const ch=chSum();new Chart(document.getElementById('c2'),{type:'doughnut',data:{labels:ch.map(c=>c.channel),datasets:[{data:ch.map(c=>c.revenue),backgroundColor:ch.map(c=>CC[c.channel]?.h||'#666'),borderColor:'#1a1d27',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#e4e6f0',font:{size:12},padding:12}},tooltip:{callbacks:{label:c=>c.label+': '+F.$(c.raw)}}}}})};
+
+PG.chan=function(){const cy=chYr(),chs=[...new Set(cy.map(r=>r.channel))],yrs=S.Y;let rows='';
+for(const ch of chs){const rv=yrs.map(y=>{const d=cy.find(r=>r.channel===ch&&r.yr===y);return d?d.revenue:0});const yy=rv.length>=2&&rv[rv.length-2]>0?((rv[rv.length-1]/rv[rv.length-2]-1)*100):null;
+rows+=`<tr><td>${bg(ch)}</td>${rv.map(v=>`<td class="n">${F.$(v)}</td>`).join('')}<td class="n ${yy!==null?(yy>=0?'pos':'neg'):''}">${yy!==null?(yy>=0?'+':'')+F.p(yy):'—'}</td></tr>`}
+const tots=yrs.map(y=>cy.filter(r=>r.yr===y).reduce((s,r)=>s+r.revenue,0));const ty=tots.length>=2&&tots[tots.length-2]>0?((tots[tots.length-1]/tots[tots.length-2]-1)*100):null;
+return`<div class="page-header"><div class="page-title">Revenue by Channel</div><div class="page-sub">Year-over-year channel performance</div></div>
+<div class="card"><div class="card-hd"><div class="card-t">Channel Revenue by Year</div><button class="xb" onclick="xT('crt')">Export</button></div><table class="dt" id="crt"><thead><tr><th>Channel</th>${yrs.map(y=>`<th class="n">${y}</th>`).join('')}<th class="n">YoY</th></tr></thead><tbody>${rows}<tr style="font-weight:700;border-top:2px solid var(--bd)"><td>TOTAL</td>${tots.map(v=>`<td class="n">${F.$(v)}</td>`).join('')}<td class="n ${ty>=0?'pos':'neg'}">${ty!==null?(ty>=0?'+':'')+F.p(ty):''}</td></tr></tbody></table></div>
+<div class="card"><div class="card-hd"><div class="card-t">Stacked by Year</div></div><canvas id="c3" height="320"></canvas></div>`};
+PG.chanC=function(){const cy=chYr(),chs=['DTC','Grocery','Wholesale','Marketplace','Corporate'],yrs=S.Y;
+const ds=chs.map(ch=>({label:ch,data:yrs.map(y=>{const d=cy.find(r=>r.channel===ch&&r.yr===y);return d?d.revenue:0}),backgroundColor:(CC[ch]?.h||'#666')+'99',borderColor:CC[ch]?.h||'#666',borderWidth:1,borderRadius:4}));
+new Chart(document.getElementById('c3'),{type:'bar',data:{labels:yrs.map(String),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e4e6f0'}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F.$(c.raw)}}},scales:{x:{stacked:true,ticks:{color:'#5c6070'},grid:{display:false}},y:{stacked:true,ticks:{callback:v=>F.$k(v),color:'#5c6070'},grid:{color:'#2e3344'}}}}})};
+
+PG.prod=function(){const p=S.P.slice(0,50),t=p.reduce((s,x)=>s+x.revenue,0);
+return`<div class="page-header"><div class="page-title">Revenue by Product</div><div class="page-sub">Top 50 · Subtotals, shipping, discounts filtered</div></div>
+<div class="kg"><div class="kpi"><div class="kpi-l">Clean Product Revenue</div><div class="kpi-v">${F.$k(t)}</div><div class="kpi-c">${S.P.length} products</div></div><div class="kpi"><div class="kpi-l">Excluded Items</div><div class="kpi-v">${S.rP.length-S.P.length}</div></div></div>
+<div class="card"><div class="card-hd"><div class="card-t">Product Revenue</div><button class="xb" onclick="xT('pt')">Export</button></div><div style="max-height:600px;overflow-y:auto"><table class="dt" id="pt"><thead><tr><th>#</th><th>Product</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">Qty</th><th class="n">Orders</th></tr></thead><tbody>${p.map((x,i)=>`<tr><td style="color:var(--txd)">${i+1}</td><td>${x.description}</td><td class="n">${F.$(x.revenue)}</td><td class="n">${F.p(x.revenue/t*100)}</td><td class="n">${F.n(x.qty)}</td><td class="n">${F.n(x.orderCount)}</td></tr>`).join('')}</tbody></table></div></div>`};
+
+PG.sku=function(){return`<div class="page-header"><div class="page-title">Top & Bottom SKUs</div></div>
+<div class="cr"><div class="card"><div class="card-hd"><div class="card-t" style="color:var(--gn)">▲ Top 15</div></div><canvas id="cT" height="360"></canvas></div>
+<div class="card"><div class="card-hd"><div class="card-t" style="color:var(--rd)">▼ Bottom 15</div></div><canvas id="cB" height="360"></canvas></div></div>
+<div class="card"><div class="card-hd"><div class="card-t">Revenue Concentration</div></div><canvas id="cP" height="280"></canvas></div>`};
+PG.skuC=function(){const p=S.P,top=p.slice(0,15),bot=p.filter(x=>x.revenue>0).slice(-15).reverse();
+const mk=(id,d,co)=>new Chart(document.getElementById(id),{type:'bar',data:{labels:d.map(x=>x.description.length>30?x.description.slice(0,28)+'…':x.description),datasets:[{data:d.map(x=>x.revenue),backgroundColor:co+'66',borderColor:co,borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>F.$(c.raw)}}},scales:{x:{ticks:{callback:v=>F.$k(v),color:'#5c6070'},grid:{color:'#2e3344'}},y:{ticks:{color:'#8b8fa3',font:{size:11}},grid:{display:false}}}}});
+mk('cT',top,'#4ade80');mk('cB',bot,'#f87171');
+const tt=p.reduce((s,x)=>s+x.revenue,0);let cu=0;const pd=p.slice(0,50).map((x,i)=>{cu+=x.revenue;return(cu/tt)*100});
+new Chart(document.getElementById('cP'),{type:'line',data:{labels:pd.map((_,i)=>i+1),datasets:[{data:pd,borderColor:'#c8a45a',backgroundColor:'rgba(200,164,90,.1)',fill:true,tension:.3,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'Top '+c.label+' = '+parseFloat(c.raw).toFixed(1)+'%'}}},scales:{x:{title:{display:true,text:'# Products',color:'#5c6070'},ticks:{color:'#5c6070'},grid:{display:false}},y:{title:{display:true,text:'Cumulative %',color:'#5c6070'},ticks:{callback:v=>v+'%',color:'#5c6070'},grid:{color:'#2e3344'},max:100}}}})};
+
+PG.yoy=function(){const yrs=S.Y;if(yrs.length<2)return'<div class="card">Need 2+ years</div>';let rows='';
+for(let m=1;m<=12;m++){const c=yrs.map(y=>{const d=S.M.find(r=>r.yr===y&&r.mo===m);return d?d.revenue:0});if(!c.some(v=>v>0))continue;
+const yy=c.length>=2&&c[c.length-2]>0?((c[c.length-1]/c[c.length-2]-1)*100):null;
+rows+=`<tr><td>${F.mo(m)}</td>${c.map(v=>`<td class="n">${v>0?F.$(v):'—'}</td>`).join('')}<td class="n ${yy!==null?(yy>=0?'pos':'neg'):''}">${yy!==null?(yy>=0?'+':'')+F.p(yy):'—'}</td></tr>`}
+return`<div class="page-header"><div class="page-title">Year-over-Year</div></div>
+<div class="card"><div class="card-hd"><div class="card-t">Monthly Overlay</div></div><canvas id="cY" height="320"></canvas></div>
+<div class="card"><div class="card-hd"><div class="card-t">Month-by-Month</div><button class="xb" onclick="xT('yt')">Export</button></div><table class="dt" id="yt"><thead><tr><th>Month</th>${yrs.map(y=>`<th class="n">${y}</th>`).join('')}<th class="n">YoY</th></tr></thead><tbody>${rows}</tbody></table></div>`};
+PG.yoyC=function(){const yrs=S.Y,ms=Array.from({length:12},(_,i)=>i+1),co=['#60a5fa','#c8a45a','#4ade80','#a78bfa'];
+const ds=yrs.map((y,i)=>({label:String(y),data:ms.map(m=>{const d=S.M.find(r=>r.yr===y&&r.mo===m);return d?d.revenue:null}),borderColor:co[i%4],tension:.3,fill:false,pointRadius:4,spanGaps:false}));
+new Chart(document.getElementById('cY'),{type:'line',data:{labels:ms.map(m=>F.mo(m)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e4e6f0'}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F.$(c.raw)}}},scales:{x:{ticks:{color:'#5c6070'},grid:{display:false}},y:{ticks:{callback:v=>F.$k(v),color:'#5c6070'},grid:{color:'#2e3344'}}}}})};
+
+PG.ws=function(){const ws=S.C.filter(c=>c.channel==='Wholesale'),gr=S.C.filter(c=>c.channel==='Grocery'),all=[...ws,...gr].sort((a,b)=>b.revenue-a.revenue),tr=all.reduce((s,c)=>s+c.revenue,0);
+const t5=all.slice(0,5).reduce((s,c)=>s+c.revenue,0),t10=all.slice(0,10).reduce((s,c)=>s+c.revenue,0);
+return`<div class="page-header"><div class="page-title">Wholesale & Grocery</div><div class="page-sub">${all.length} accounts</div></div>
+<div class="kg"><div class="kpi"><div class="kpi-l">Total Revenue</div><div class="kpi-v">${F.$k(tr)}</div></div>
+<div class="kpi"><div class="kpi-l">Top 5 Concentration</div><div class="kpi-v">${F.p(t5/tr*100)}</div><div class="kpi-c" style="color:${t5/tr>.5?'var(--or)':'var(--gn)'}">${t5/tr>.5?'⚠ High risk':'Healthy'}</div></div>
+<div class="kpi"><div class="kpi-l">Top 10 Concentration</div><div class="kpi-v">${F.p(t10/tr*100)}</div></div>
+<div class="kpi"><div class="kpi-l">Avg Account Rev</div><div class="kpi-v">${F.$(tr/all.length)}</div></div></div>
+<div class="card"><div class="card-hd"><div class="card-t">All Accounts</div><button class="xb" onclick="xT('wt')">Export</button></div><div style="max-height:600px;overflow-y:auto"><table class="dt" id="wt"><thead><tr><th>#</th><th>Account</th><th>Type</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">Orders</th><th class="n">Avg</th></tr></thead><tbody>${all.map((c,i)=>`<tr><td style="color:var(--txd)">${i+1}</td><td>${c.customer}</td><td>${bg(c.channel)}</td><td class="n">${F.$(c.revenue)}</td><td class="n">${F.p(c.revenue/tr*100)}</td><td class="n">${F.n(c.orders)}</td><td class="n">${F.$(c.revenue/c.orders)}</td></tr>`).join('')}</tbody></table></div></div>`};
+
+PG.mix=function(){return`<div class="page-header"><div class="page-title">Channel Mix Trend</div></div>
+<div class="cr"><div class="card"><div class="card-hd"><div class="card-t">Revenue Share %</div></div><canvas id="cM1" height="300"></canvas></div>
+<div class="card"><div class="card-hd"><div class="card-t">Absolute Revenue</div></div><canvas id="cM2" height="300"></canvas></div></div>`};
+PG.mixC=function(){const cy=chYr(),chs=['DTC','Grocery','Wholesale','Marketplace','Corporate'],yrs=S.Y;
+const yt=yrs.map(y=>cy.filter(r=>r.yr===y).reduce((s,r)=>s+r.revenue,0));
+const pds=chs.map(ch=>({label:ch,data:yrs.map((y,i)=>{const d=cy.find(r=>r.channel===ch&&r.yr===y);return d&&yt[i]>0?(d.revenue/yt[i])*100:0}),backgroundColor:(CC[ch]?.h||'#666')+'99',borderColor:CC[ch]?.h||'#666',borderWidth:1}));
+new Chart(document.getElementById('cM1'),{type:'bar',data:{labels:yrs.map(String),datasets:pds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e4e6f0'}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+parseFloat(c.raw).toFixed(1)+'%'}}},scales:{x:{stacked:true,ticks:{color:'#5c6070'},grid:{display:false}},y:{stacked:true,max:100,ticks:{callback:v=>v+'%',color:'#5c6070'},grid:{color:'#2e3344'}}}}});
+const ads=chs.map(ch=>({label:ch,data:yrs.map(y=>{const d=cy.find(r=>r.channel===ch&&r.yr===y);return d?d.revenue:0}),backgroundColor:(CC[ch]?.h||'#666')+'99',borderColor:CC[ch]?.h||'#666',borderWidth:1}));
+new Chart(document.getElementById('cM2'),{type:'bar',data:{labels:yrs.map(String),datasets:ads},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e4e6f0'}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F.$(c.raw)}}},scales:{x:{stacked:true,ticks:{color:'#5c6070'},grid:{display:false}},y:{stacked:true,ticks:{callback:v=>F.$k(v),color:'#5c6070'},grid:{color:'#2e3344'}}}}})};
+
+PG.dq=function(){const si=S.rP.filter(p=>p.description==='Subtotal'),shi=S.rP.filter(p=>['Shopify Shipping','Shipping'].includes(p.productNum)),di=S.rP.filter(p=>(p.productNum||'').toLowerCase().includes('discount'));
+const sr=si.reduce((s,p)=>s+p.revenue,0),shr=shi.reduce((s,p)=>s+p.revenue,0),dr=di.reduce((s,p)=>s+p.revenue,0);
+const mk=Object.keys(TX.mg);
+return`<div class="page-header"><div class="page-title">Data Quality</div><div class="page-sub">Transformation layer status</div></div>
+<div class="kg"><div class="kpi" style="border-left:3px solid var(--gn)"><div class="kpi-l">Status</div><div class="kpi-v" style="color:var(--gn);font-size:20px">Active</div></div>
+<div class="kpi"><div class="kpi-l">Subtotals Filtered</div><div class="kpi-v" style="color:var(--rd)">${F.$k(sr)}</div><div class="kpi-c">${si.length} items</div></div>
+<div class="kpi"><div class="kpi-l">Shipping Filtered</div><div class="kpi-v">${F.$k(shr)}</div></div>
+<div class="kpi"><div class="kpi-l">Customers Merged</div><div class="kpi-v">${mk.length}</div></div></div>
+<div class="card"><div class="card-hd"><div class="card-t">Customer Merge Rules</div></div><table class="dt"><thead><tr><th>Duplicate</th><th></th><th>Merged Into</th></tr></thead><tbody>${mk.map(k=>`<tr><td style="color:var(--rd);text-decoration:line-through">${k}</td><td style="color:var(--txd)">→</td><td style="color:var(--gn)">${TX.mg[k]}</td></tr>`).join('')}</tbody></table></div>
+<div class="card"><div class="card-hd"><div class="card-t">Product Exclusions</div></div><table class="dt"><thead><tr><th>Pattern</th><th>Reason</th><th class="n">Filtered</th></tr></thead><tbody>
+<tr><td>Blank + "Subtotal"</td><td>Shopify sync artifact</td><td class="n" style="color:var(--rd)">${F.$(sr)}</td></tr>
+<tr><td>Shipping items</td><td>Used in shipping report</td><td class="n">${F.$(shr)}</td></tr>
+<tr><td>Discount items</td><td>Used in promo report</td><td class="n" style="color:var(--gn)">${F.$(dr)}</td></tr></tbody></table></div>
+<div class="card"><div class="card-hd"><div class="card-t">Channel Classification</div></div><table class="dt"><thead><tr><th>Channel</th><th>Keywords</th><th class="n">Accounts</th></tr></thead><tbody>
+<tr><td>${bg('DTC')}</td><td>"shopify"</td><td class="n">${S.C.filter(c=>c.channel==='DTC').length}</td></tr>
+<tr><td>${bg('Grocery')}</td><td>loblaws, sobeys, metro, iga, avril, etc.</td><td class="n">${S.C.filter(c=>c.channel==='Grocery').length}</td></tr>
+<tr><td>${bg('Marketplace')}</td><td>well.ca, faire, shop moi, indigo</td><td class="n">${S.C.filter(c=>c.channel==='Marketplace').length}</td></tr>
+<tr><td>${bg('Corporate')}</td><td>corporate, terra, peter and paul, etc.</td><td class="n">${S.C.filter(c=>c.channel==='Corporate').length}</td></tr>
+<tr><td>${bg('Wholesale')}</td><td>Everything else</td><td class="n">${S.C.filter(c=>c.channel==='Wholesale').length}</td></tr></tbody></table></div>`};
+
+// Chart map
+const CM={dash:'dashC',chan:'chanC',sku:'skuC',yoy:'yoyC',mix:'mixC'};
+
+function render(pg){S.pg=pg;Chart.helpers.each(Chart.instances,i=>{i.destroy()});
+document.querySelectorAll('.nav-item').forEach(e=>{e.classList.toggle('active',e.dataset.page===pg)});
+const fn=PG[pg];if(!fn){document.getElementById('M').innerHTML='<div class="card">Page not found</div>';return}
+document.getElementById('M').innerHTML=fn();const cf=PG[CM[pg]];if(cf)requestAnimationFrame(()=>cf())}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(e=>{e.addEventListener('click',()=>{if(!S.C.length)return;render(e.dataset.page)})});
+
+function xT(id){const t=document.getElementById(id);if(!t)return;const wb=XLSX.utils.table_to_book(t);XLSX.writeFile(wb,'kanel_'+id+'_'+new Date().toISOString().split('T')[0]+'.xlsx')}
+
+(function(){if(loadCa()){hide('modal');sCS(1);render('dash');return}const c=gC();if(c){document.getElementById('iU').value=c.url;document.getElementById('iN').value=c.user;document.getElementById('iA').value=c.appId}})();
+</script>
+</body>
+</html>
