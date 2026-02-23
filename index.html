@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Kanel Sales Hub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+:root{--bg:#f0f2f5;--sf:#fff;--sf2:#f7f8fa;--bd:#e0e4ea;--ac:#1a56db;--acl:#e1effe;--gn:#059669;--gnl:#d1fae5;--gnbg:#ecfdf5;--rd:#dc2626;--rdl:#fee2e2;--rdbg:#fef2f2;--am:#d97706;--aml:#fef3c7;--ambg:#fffbeb;--tx:#111827;--txm:#6b7280;--txd:#9ca3af;--purple:#7c3aed;--purplel:#ede9fe;--teal:#0891b2;--teall:#cffafe}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;-webkit-font-smoothing:antialiased}
+
+.setup{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;padding:32px;background:linear-gradient(135deg,#1a56db 0%,#7c3aed 100%)}
+.setup h1{font-size:32px;font-weight:700;color:#fff}.setup p{color:rgba(255,255,255,.8);text-align:center;max-width:420px}
+.setup code{background:rgba(255,255,255,.15);padding:4px 10px;border-radius:6px;font-size:13px;font-family:monospace;color:#fff}
+.setup input{background:rgba(255,255,255,.95);border:none;border-radius:10px;padding:14px;font-family:monospace;font-size:14px;width:320px;text-align:center}
+.setup-btn{padding:12px 36px;background:#fff;border:none;border-radius:10px;color:var(--ac);font-weight:700;cursor:pointer;font-size:15px;transition:transform .15s}
+.setup-btn:hover{transform:scale(1.03)}.setup-err{color:#fca5a5;font-size:13px;display:none}
+
+.shell{display:flex;min-height:100vh}
+.side{width:230px;background:var(--sf);border-right:1px solid var(--bd);padding:16px 0;position:fixed;height:100vh;overflow-y:auto;z-index:10}
+.side-hd{padding:0 18px 16px;border-bottom:1px solid var(--bd);margin-bottom:8px}
+.side-hd h1{font-size:17px;font-weight:700;color:var(--ac);letter-spacing:-.3px}
+.side-hd p{font-size:11px;color:var(--txm)}
+.nav-item{padding:9px 18px;cursor:pointer;font-size:13px;color:var(--txm);display:flex;align-items:center;gap:8px;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--sf2);color:var(--tx)}
+.nav-item.active{background:var(--acl);color:var(--ac);font-weight:600;border-left-color:var(--ac)}
+.nav-sep{font-size:10px;font-weight:700;color:var(--txd);padding:14px 18px 4px;text-transform:uppercase;letter-spacing:1.2px}
+.main{margin-left:230px;padding:28px;flex:1;min-width:0;max-width:1400px}
+
+.kg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:18px 20px;transition:box-shadow .2s}
+.kpi:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.kpi-l{font-size:11px;color:var(--txm);text-transform:uppercase;letter-spacing:.6px;font-weight:500}
+.kpi-v{font-size:26px;font-weight:700;margin-top:6px;letter-spacing:-.5px}
+.kpi-sub{font-size:12px;color:var(--txm);margin-top:2px}
+
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:18px;transition:box-shadow .2s}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card-t{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.card-sub{font-size:12px;color:var(--txm);margin-top:2px}
+.cr{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+
+.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{text-align:left;padding:10px 14px;background:var(--sf2);border-bottom:2px solid var(--bd);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;color:var(--txm)}
+.dt td{padding:8px 14px;border-bottom:1px solid #f0f0f0}
+.dt tbody tr:hover{background:#fafbfc}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+.pos{color:var(--gn);font-weight:600}.neg{color:var(--rd);font-weight:600}
+.xb{font-size:11px;padding:5px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;cursor:pointer;font-weight:500;transition:all .15s}
+.xb:hover{background:var(--acl);border-color:var(--ac);color:var(--ac)}
+.badge{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600}
+.badge-ecom{background:#dbeafe;color:#1d4ed8}.badge-corp{background:#fce7f3;color:#be185d}
+.badge-grocery{background:#d1fae5;color:#065f46}.badge-pos{background:#e0e7ff;color:#4338ca}
+.badge-who{background:#fef3c7;color:#92400e}.badge-dya{background:#ede9fe;color:#6d28d9}
+
+.insight-box{border-radius:10px;padding:16px 20px;margin-bottom:14px;font-size:13px;line-height:1.6}
+.insight-green{background:var(--gnbg);border-left:4px solid var(--gn);color:#065f46}
+.insight-red{background:var(--rdbg);border-left:4px solid var(--rd);color:#991b1b}
+.insight-amber{background:var(--ambg);border-left:4px solid var(--am);color:#92400e}
+.insight-blue{background:#eff6ff;border-left:4px solid var(--ac);color:#1e40af}
+.insight-purple{background:#faf5ff;border-left:4px solid var(--purple);color:#581c87}
+
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:20px;padding:10px}
+.donut-legend{font-size:12px;line-height:2}
+.donut-legend span{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+.q-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #c7d2fe;border-radius:10px;padding:18px 22px;margin-bottom:14px}
+.q-box-title{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.q-box ul{margin:0;padding-left:20px;font-size:13px;color:#374151;line-height:1.8}
+
+.note{margin-top:16px;padding:16px;background:var(--sf2);font-size:12px;color:var(--txm);border-radius:8px}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:12px;color:var(--txm);font-weight:500;transition:all .15s}
+.refresh-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--acl)}
+.spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-.5px}
+.page-sub{font-size:12px;color:var(--txm);margin-top:2px}
+@media(max-width:768px){.side{display:none}.main{margin-left:0}.cr{grid-template-columns:1fr}.cr3{grid-template-columns:1fr}.kg{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head><body>
+<div id="setupScreen" class="setup">
+<h1>Kanel Sales Hub</h1>
+<p>Make sure the sales proxy is running:</p>
+<code>node sales-proxy.js</code>
+<p style="font-size:12px;margin-top:8px">The proxy connects to Fishbowl from your machine and serves data to this dashboard.</p>
+<label style="font-size:12px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px;margin-top:16px">Proxy URL</label>
+<input type="text" id="setupUrl" value="http://localhost:3848">
+<button class="setup-btn" onclick="saveConfig()">Connect</button>
+<div id="setupError" class="setup-err"></div>
+</div>
+
+<div id="app" class="hidden">
+<div class="shell">
+<div class="side">
+<div class="side-hd">
+<h1>Kanel Sales Hub</h1>
+<p id="lastUpdated">Not connected</p>
+</div>
+<div style="padding:8px 18px 8px">
+<button class="refresh-btn" id="refreshBtn" onclick="refreshData()" style="width:100%;justify-content:center">
+<svg id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:14px;height:14px"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+Refresh Data</button>
+</div>
+<div class="nav-sep">Overview</div>
+<div class="nav-item active" data-page="exec">Executive Summary</div>
+<div class="nav-item" data-page="dash">Dashboard</div>
+<div class="nav-item" data-page="pulse">Weekly Pulse</div>
+<div class="nav-sep">Analysis</div>
+<div class="nav-item" data-page="comp">Comp %</div>
+<div class="nav-item" data-page="chan">Channel</div>
+<div class="nav-item" data-page="cat">Category</div>
+<div class="nav-item" data-page="sku">SKU Performance</div>
+<div class="nav-item" data-page="yoy">YoY Trends</div>
+<div class="nav-item" data-page="who">Wholesale</div>
+<div class="nav-sep">Reports</div>
+<div class="nav-item" data-page="kim">Kim's Report</div>
+</div>
+<div class="main" id="M"><div class="card" style="text-align:center;padding:40px;color:var(--txm)">Loading data from Fishbowl...</div></div>
+</div>
+</div>
+
+<script>
+let CFG=JSON.parse(localStorage.getItem('ksh-cfg')||'null'),D=null;
+async function saveConfig(){const u=document.getElementById('setupUrl').value.replace(/\/$/,''),e=document.getElementById('setupError');e.style.display='none';try{const r=await fetch(`${u}/api/health`);if(!r.ok)throw new Error(`HTTP ${r.status}`);CFG={url:u};localStorage.setItem('ksh-cfg',JSON.stringify(CFG));document.getElementById('setupScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');refreshData()}catch(x){e.style.display='block';e.textContent=`Failed: ${x.message}. Is proxy running?`}}
+if(CFG){document.getElementById('setupScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');fetch(`${CFG.url}/api/cached`).then(r=>r.ok?r.json():null).then(d=>{if(d&&!d.error){D=d;renderCurrent()}refreshData()}).catch(()=>refreshData())}
+async function refreshData(){if(!CFG)return;const b=document.getElementById('refreshBtn'),i=document.getElementById('refreshIcon');b.disabled=true;i.classList.add('spin');try{const r=await fetch(`${CFG.url}/api/sales-data`);if(!r.ok)throw new Error(`HTTP ${r.status}`);D=await r.json();document.getElementById('lastUpdated').textContent='Updated '+new Date(D.updated).toLocaleString('en-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});renderCurrent()}catch(e){if(!D)document.getElementById('M').innerHTML=`<div class="card" style="text-align:center;padding:40px;color:var(--rd)">Error: ${e.message}</div>`}b.disabled=false;i.classList.remove('spin')}
+
+// Formatters
+const F={
+  $:v=>{if(v==null)return'\u2014';const a=Math.abs(v);if(a>=1e6)return(v<0?'-':'')+'$'+(a/1e6).toFixed(3).replace(/\.?0+$/,'')+'M';if(a>=1e3)return(v<0?'-':'')+'$'+(a/1e3).toFixed(a>=1e5?0:1)+'K';return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})},
+  $m:v=>{if(v==null)return'\u2014';return(v<0?'-':'')+'$'+(Math.abs(v)/1e6).toFixed(3)+'M'},
+  $f:v=>{if(v==null)return'\u2014';return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})},
+  n:v=>v==null?'\u2014':v.toLocaleString('en-US',{maximumFractionDigits:0}),
+  p:v=>v==null?'\u2014':v.toFixed(1)+'%',
+  mo:m=>['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]||m,
+  dow:d=>['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]||d
+};
+function xT(id){const t=document.getElementById(id);if(!t)return;XLSX.writeFile(XLSX.utils.table_to_book(t),'kanel_export.xlsx')}
+function classify(name){const n=(name||'').toLowerCase();if(n.includes('shopify pos'))return'POS';if(n.includes('shopify'))return'Ecommerce';if(n==='dya')return'Wholesale: DYA';const grocery=['loblaws','sobeys','metro','iga','maxi','provigo','avril','community natural','summerhill','purity life','rachelle','whole foods'];if(grocery.some(k=>n.includes(k)))return'Grocery';const corp=['corporate','peter and paul','biomed','corby','inspira','terra corporate','fairmont','hotel','remax','donovan','financiere','financière','tourisme','gilles lafleur','parisien','adams wealth','rbc','marketing kitchen','acart','addimpact','aevias'];if(corp.some(k=>n.includes(k)))return'Corporate';return'Wholesale: House Account'}
+function categorize(pn,desc){pn=(pn||'').trim();desc=(desc||'').trim().toLowerCase();if(pn.startsWith('GIF-'))return'Gift';if(pn.startsWith('BLE-'))return'Spice Blend';if(pn.startsWith('SAL-'))return'Sea Salt';if(pn.startsWith('RIM-'))return'Cocktail Rimmer';if(pn.startsWith('REF-'))return'Refill';if(pn.startsWith('COL-'))return'Collection';if(pn.startsWith('STA-')||pn.startsWith('PRE-'))return'Starter/Prefill';if(pn.startsWith('MAR-')||pn.startsWith('POP-')||pn.startsWith('DEM-'))return'Marketing';const sK=['truffle salt','sea salt','garlic salt','peppercorn','fleur de sel','smoked salt','maple smoked','charred lemon','cold smoked','fiery sea','mineral','pure salt','summer sea salt','salt cellar'];if(sK.some(k=>desc.includes(k)))return'Sea Salt';const bK=['butcher','sunshine','stockholm','montreal bagel','sunday roast','korean heat','la vita','louisiana','taco night','green goddess','chipotle','bbq','smoky rub','chorizo','umami','curry','vadouvan','dukka','cinnamon','gingerbread','turmeric','tomato & fennel','pumpkin','jamaican jerk','aglio','bangkok','taqueria','chili crunch','coffee rub','bombshell','tonka sugar','cacao apple'];if(bK.some(k=>desc.includes(k)))return'Spice Blend';const rK=['caesar','margarita','berry breeze','cranberry spruce','sour cherry','rimmer','cocktail'];if(rK.some(k=>desc.includes(k)))return'Cocktail Rimmer';const gK=['collection','classic','voyager','traveler','traveller','top 5','best sellers','duo','trio','bundle','bright & fresh','smoke & fire','roasted & raw','24 karat','salt edit','gourmet','spice lovers','family faves','nirvana','piccolo','grande','medio','perfect 10','sparkle','advent','arrivals','harvest','holiday'];if(gK.some(k=>desc.includes(k)))return'Gift';if(desc.includes('refill'))return'Refill';if(['demo','signage','shelf talker','displayer','easel','pop'].some(k=>desc.includes(k)))return'Marketing';if(['vanilla','maple sugar','spoon','mill','cellar','dispenser','furoshiki','gift card','gift bag','personalized','custom'].some(k=>desc.includes(k)))return'Mixed';if(['discount','credit','escompte','rabais','retour','samples','listing fee','allowance','opening order'].some(k=>desc.includes(k)))return'Adjustments';if(desc.includes('shipping'))return'Shipping';return'Other'}
+function comp(a,b){return b>0?((a/b-1)*100):null}
+function compS(v){if(v==null)return'\u2014';return'<span class="'+(v>=0?'pos':'neg')+'">'+(v>=0?'+':'')+F.p(v)+'</span>'}
+function aggByChannel(rows){const ch={};(rows||[]).forEach(r=>{const c=classify(r.customer);if(!ch[c])ch[c]={revenue:0,orders:0};ch[c].revenue+=r.revenue;ch[c].orders+=r.orders});return ch}
+function badgeCh(ch){const m={'Ecommerce':'ecom','Corporate':'corp','Grocery':'grocery','POS':'pos','Wholesale: House Account':'who','Wholesale: DYA':'dya'};return`<span class="badge badge-${m[ch]||'who'}">${ch}</span>`}
+
+// SVG Donut chart
+function donut(data,size=160){
+  const total=data.reduce((s,d)=>s+d.value,0);if(!total)return'';
+  const r=size/2,cx=r,cy=r,ri=r*0.6;
+  let angle=0,paths='';
+  data.forEach(d=>{
+    const pct=d.value/total,a1=angle,a2=angle+pct*Math.PI*2;
+    const x1=cx+r*Math.sin(a1),y1=cy-r*Math.cos(a1);
+    const x2=cx+r*Math.sin(a2),y2=cy-r*Math.cos(a2);
+    const ix1=cx+ri*Math.sin(a1),iy1=cy-ri*Math.cos(a1);
+    const ix2=cx+ri*Math.sin(a2),iy2=cy-ri*Math.cos(a2);
+    const large=pct>0.5?1:0;
+    paths+=`<path d="M${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${ix2},${iy2} A${ri},${ri} 0 ${large},0 ${ix1},${iy1} Z" fill="${d.color}" opacity="0.85"/>`;
+    angle=a2;
+  });
+  const centerText=F.$(total);
+  return`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="11" fill="#6b7280" font-family="DM Sans">TOTAL</text><text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="14" font-weight="700" fill="#111827" font-family="DM Sans">${centerText}</text></svg>`;
+}
+function donutLegend(data){
+  const total=data.reduce((s,d)=>s+d.value,0);
+  return data.map(d=>`<div><span style="background:${d.color}"></span>${d.label}: ${F.$(d.value)} (${total>0?F.p(d.value/total*100):'0%'})</div>`).join('');
+}
+
+// Get MTD data from daily query  
+function getMTD(){
+  const daily=D.daily||[];const now=new Date();const yr=now.getFullYear(),mo=now.getMonth()+1;
+  let rev=0,ord=0;
+  daily.forEach(r=>{
+    const d=new Date(r.dt);
+    if(d.getFullYear()===yr&&d.getMonth()+1===mo){rev+=r.revenue;ord+=r.orders}
+  });
+  return{revenue:rev,orders:ord};
+}
+function getWTD(){
+  const tw=D.tw||[];
+  return{revenue:tw.reduce((s,r)=>s+r.revenue,0),orders:tw.reduce((s,r)=>s+r.orders,0)};
+}
+
+// Weekly trailing from daily data
+function getWeeklyTrailing(n){
+  const daily=D.daily||[];const now=new Date();
+  const day=now.getDay();const monOff=day===0?6:day-1;
+  const weeks=[];
+  for(let w=0;w<n;w++){
+    const wMon=new Date(now);wMon.setDate(now.getDate()-monOff-7*w);wMon.setHours(0,0,0,0);
+    const wSun=new Date(wMon);wSun.setDate(wMon.getDate()+6);wSun.setHours(23,59,59);
+    let rev=0,ord=0;
+    daily.forEach(r=>{const d=new Date(r.dt);if(d>=wMon&&d<=wSun){rev+=r.revenue;ord+=r.orders}});
+    const fmt=d=>d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+    weeks.push({label:`${fmt(wMon)}-${fmt(wSun)}`,revenue:rev,orders:ord,from:wMon,to:wSun});
+  }
+  return weeks;
+}
+
+let currentPage='exec';
+function renderCurrent(){if(PG[currentPage])document.getElementById('M').innerHTML=PG[currentPage]()}
+const PG={};
+const COLORS=['#1a56db','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d','#6366f1','#f97316'];
+
+// ==================== EXECUTIVE SUMMARY ====================
+PG.exec=function(){
+  const c=D.ytd_cust||[],cp=D.ytd_prior||[];
+  const totalRev=c.reduce((s,r)=>s+r.revenue,0),totalOrd=c.reduce((s,r)=>s+r.orders,0);
+  const priorRev=cp.reduce((s,r)=>s+r.revenue,0);
+  const ytdComp=comp(totalRev,priorRev);
+  const mtd=getMTD(),wtd=getWTD();
+  const chData=aggByChannel(c),chPrior=aggByChannel(cp);
+
+  // Category data
+  const prods=(D.ytd_products||[]).filter(p=>!['Subtotal','Shipping','Adjustments'].includes(categorize(p.productNum,p.description)));
+  const cats={};prods.forEach(p=>{const cat=categorize(p.productNum,p.description);if(!cats[cat])cats[cat]={revenue:0,count:0};cats[cat].revenue+=p.revenue;cats[cat].count++});
+  const catList=Object.entries(cats).filter(([k,v])=>v.revenue>0).sort((a,b)=>b[1].revenue-a[1].revenue);
+
+  // Monthly trend
+  const byMo={};(D.monthly||[]).forEach(r=>{byMo[r.yr+'-'+String(r.mo).padStart(2,'0')]=r.revenue});
+
+  let h='<div style="margin-bottom:24px"><div class="page-title">Executive Summary</div><div class="page-sub">Fiscal YTD: Jul 27, 2025 - Present</div></div>';
+
+  // KPI row
+  h+='<div class="kg" style="grid-template-columns:repeat(6,1fr)">';
+  h+=`<div class="kpi"><div class="kpi-l">YTD Revenue</div><div class="kpi-v">${F.$m(totalRev)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Prior YTD</div><div class="kpi-v">${F.$m(priorRev)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">YTD Comp</div><div class="kpi-v" style="color:${ytdComp>=0?'var(--gn)':'var(--rd)'}">${compS(ytdComp)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">MTD Revenue</div><div class="kpi-v">${F.$(mtd.revenue)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">WTD Revenue</div><div class="kpi-v">${F.$(wtd.revenue)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">YTD Orders</div><div class="kpi-v">${F.n(totalOrd)}</div></div>`;
+  h+='</div>';
+
+  // Insights section
+  const topCh=Object.entries(chData).sort((a,b)=>b[1].revenue-a[1].revenue);
+  const whRev=(chData['Wholesale: House Account']||{revenue:0}).revenue;
+  const whPrior=(chPrior['Wholesale: House Account']||{revenue:0}).revenue;
+  const whComp=comp(whRev,whPrior);
+  const ecomRev=(chData['Ecommerce']||{revenue:0}).revenue;
+  const ecomPrior=(chPrior['Ecommerce']||{revenue:0}).revenue;
+  const ecomComp=comp(ecomRev,ecomPrior);
+  const grcRev=(chData['Grocery']||{revenue:0}).revenue;
+  const grcPrior=(chPrior['Grocery']||{revenue:0}).revenue;
+  const grcComp=comp(grcRev,grcPrior);
+
+  h+='<div class="card"><div class="card-t" style="margin-bottom:14px">Key Insights</div>';
+  if(whComp>20) h+=`<div class="insight-box insight-green"><strong>Wholesale is driving growth.</strong> House Accounts at ${F.$(whRev)} (${compS(whComp)} YoY) — now ${F.p(whRev/totalRev*100)} of total revenue. This channel has overtaken Ecommerce as the primary revenue driver.</div>`;
+  if(ecomComp!==null) h+=`<div class="insight-box insight-blue"><strong>Ecommerce ${ecomComp>=0?'holding steady':'softening'}.</strong> ${F.$(ecomRev)} (${compS(ecomComp)} YoY) — ${F.p(ecomRev/totalRev*100)} share. ${ecomComp<5?'Consider retention campaigns and AOV optimization.':'Digital channel continues to perform.'}</div>`;
+  if(grcComp<0) h+=`<div class="insight-box insight-red"><strong>Grocery channel declining.</strong> ${F.$(grcRev)} (${compS(grcComp)} YoY). Review listing strategy, promotional calendar, and buyer relationships. Shelf position audits recommended.</div>`;
+  h+=`<div class="insight-box insight-amber"><strong>Revenue concentration risk.</strong> Top channel (${topCh[0]?topCh[0][0]:''}) is ${F.p(topCh[0]?topCh[0][1].revenue/totalRev*100:0)} of revenue. Industry best practice targets <40% from any single channel for resilience.</div>`;
+  h+='</div>';
+
+  // Two columns: Channel donut + Category donut
+  h+='<div class="cr">';
+  // Channel donut
+  const chDonutData=topCh.map(([ch,d],i)=>({label:ch,value:d.revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-t" style="margin-bottom:10px">Revenue by Channel</div><div class="donut-wrap">';
+  h+=donut(chDonutData,170);
+  h+=`<div class="donut-legend">${donutLegend(chDonutData)}</div>`;
+  h+='</div></div>';
+  // Category donut
+  const catDonutData=catList.slice(0,7).map(([cat,d],i)=>({label:cat,value:d.revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-t" style="margin-bottom:10px">Revenue by Category</div><div class="donut-wrap">';
+  h+=donut(catDonutData,170);
+  h+=`<div class="donut-legend">${donutLegend(catDonutData)}</div>`;
+  h+='</div></div>';
+  h+='</div>';
+
+  // Questions for leadership
+  h+='<div class="q-box"><div class="q-box-title">Discussion Points for Leadership</div><ul>';
+  h+='<li><strong>Channel diversification:</strong> With wholesale at 50%+ of revenue, what is our contingency if a top 3 account churns?</li>';
+  h+='<li><strong>Grocery strategy:</strong> Is the declining grocery comp a distribution/listing problem or a velocity/merchandising problem? Do we invest or divest?</li>';
+  h+='<li><strong>Ecommerce growth:</strong> What levers exist for digital — new customer acquisition, AOV improvement, or repeat purchase rate?</li>';
+  h+='<li><strong>Corporate pipeline:</strong> Corporate has high AOV but low order count. What does the Q2/Q3 gifting pipeline look like?</li>';
+  h+='<li><strong>New SKU launches:</strong> Are upcoming launches aligned with our fastest-growing channels, or are we developing product for our weakest?</li>';
+  h+='</ul></div>';
+  return h;
+};
+
+// ==================== DASHBOARD ====================
+PG.dash=function(){
+  const c=D.ytd_cust||[],cp=D.ytd_prior||[];
+  const totalRev=c.reduce((s,r)=>s+r.revenue,0),totalOrd=c.reduce((s,r)=>s+r.orders,0);
+  const priorRev=cp.reduce((s,r)=>s+r.revenue,0);
+  const ytdComp=comp(totalRev,priorRev);
+  const mtd=getMTD(),wtd=getWTD();
+  const chData=aggByChannel(c);
+  const prods=(D.ytd_products||[]).filter(p=>!['Subtotal','Shipping','Adjustments'].includes(categorize(p.productNum,p.description)));
+  const cats={};prods.forEach(p=>{const cat=categorize(p.productNum,p.description);if(!cats[cat])cats[cat]={revenue:0,count:0};cats[cat].revenue+=p.revenue;cats[cat].count++});
+  const catList=Object.entries(cats).filter(([k,v])=>v.revenue>0).sort((a,b)=>b[1].revenue-a[1].revenue);
+  const catTotal=catList.reduce((s,[k,v])=>s+v.revenue,0);
+
+  let h='<div style="margin-bottom:24px"><div class="page-title">Sales Dashboard</div><div class="page-sub">Fiscal YTD: Jul 27, 2025 - Present</div></div>';
+  h+='<div class="kg" style="grid-template-columns:repeat(7,1fr)">';
+  h+=`<div class="kpi"><div class="kpi-l">YTD Revenue</div><div class="kpi-v">${F.$m(totalRev)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">YTD Orders</div><div class="kpi-v">${F.n(totalOrd)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Prior YTD</div><div class="kpi-v">${F.$m(priorRev)}</div></div>`;
+  h+=`<div class="kpi" style="border-color:${ytdComp>=0?'var(--gn)':'var(--rd)'}"><div class="kpi-l">YTD Comp</div><div class="kpi-v" style="color:${ytdComp>=0?'var(--gn)':'var(--rd)'}">${compS(ytdComp)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">MTD Revenue</div><div class="kpi-v">${F.$(mtd.revenue)}</div><div class="kpi-sub">${F.n(mtd.orders)} orders</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">WTD Revenue</div><div class="kpi-v">${F.$(wtd.revenue)}</div><div class="kpi-sub">${F.n(wtd.orders)} orders</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Avg Order</div><div class="kpi-v">${F.$(totalRev/totalOrd)}</div></div>`;
+  h+='</div>';
+
+  // Channel table
+  h+='<div class="card"><div class="card-hd"><div class="card-t">YTD by Channel</div><button class="xb" onclick="xT(\'chtop\')">Export</button></div>';
+  h+='<table class="dt" id="chtop"><thead><tr><th style="width:250px">Channel</th><th class="n" style="width:160px">Revenue</th><th class="n" style="width:100px">Orders</th><th class="n" style="width:100px">Share</th><th class="n" style="width:140px">Avg Order</th></tr></thead><tbody>';
+  Object.entries(chData).sort((a,b)=>b[1].revenue-a[1].revenue).forEach(([ch,d])=>{
+    h+=`<tr><td style="font-weight:500">${badgeCh(ch)} ${ch}</td><td class="n">${F.$f(d.revenue)}</td><td class="n">${F.n(d.orders)}</td><td class="n">${F.p(d.revenue/totalRev*100)}</td><td class="n">${F.$f(d.revenue/d.orders)}</td></tr>`;
+  });
+  h+='</tbody></table></div>';
+
+  // Two columns
+  h+='<div class="cr">';
+  const top=c.slice().sort((a,b)=>b.revenue-a.revenue).slice(0,20);
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Top 20 Customers</div><button class="xb" onclick="xT(\'t20\')">Export</button></div>';
+  h+='<div style="max-height:500px;overflow-y:auto"><table class="dt" id="t20"><thead><tr><th style="width:30px">#</th><th>Customer</th><th>Channel</th><th class="n" style="width:120px">Revenue</th><th class="n" style="width:70px">Orders</th></tr></thead><tbody>';
+  top.forEach((r,i)=>{h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${r.customer}</td><td>${badgeCh(classify(r.customer))}</td><td class="n">${F.$f(r.revenue)}</td><td class="n">${F.n(r.orders)}</td></tr>`});
+  h+='</tbody></table></div></div>';
+
+  // Category with donut
+  const catDonutData=catList.slice(0,7).map(([cat,d],i)=>({label:cat,value:d.revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Revenue by Category</div><button class="xb" onclick="xT(\'catd\')">Export</button></div>';
+  h+='<div class="donut-wrap" style="margin-bottom:12px">'+donut(catDonutData,140)+'<div class="donut-legend">'+donutLegend(catDonutData)+'</div></div>';
+  h+='<table class="dt" id="catd"><thead><tr><th>Category</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">SKUs</th></tr></thead><tbody>';
+  catList.forEach(([cat,d])=>{h+=`<tr><td style="font-weight:500">${cat}</td><td class="n">${F.$f(d.revenue)}</td><td class="n">${F.p(d.revenue/catTotal*100)}</td><td class="n">${d.count}</td></tr>`});
+  h+='</tbody></table></div></div>';
+  return h;
+};
+
+// ==================== WEEKLY PULSE ====================
+PG.pulse=function(){
+  const chs=['Corporate','Ecommerce','Grocery','POS','Wholesale: DYA','Wholesale: House Account'];
+  const twCh=aggByChannel(D.tw),lwCh=aggByChannel(D.lw),lyCh=aggByChannel(D.ly);
+  const ytdCCh=aggByChannel(D.ytd_cust),ytdPCh=aggByChannel(D.ytd_prior);
+  const g=(obj,ch)=>obj[ch]||{revenue:0,orders:0};
+  const atr=(r,o)=>o>0?F.$(r/o):'\u2014';
+  let ttw=0,tlw=0,tly=0;
+  let rows='';
+  for(const ch of chs){const tw=g(twCh,ch),lw=g(lwCh,ch),ly=g(lyCh,ch);const twC=comp(tw.revenue,ly.revenue);ttw+=tw.revenue;tlw+=lw.revenue;tly+=ly.revenue;rows+=`<tr><td style="font-weight:500">${badgeCh(ch)}</td><td class="n">${F.$(tw.revenue)}</td><td class="n">${F.$(lw.revenue)}</td><td class="n">${F.$(ly.revenue)}</td><td class="n">${compS(twC)}</td><td class="n">${tw.orders}</td></tr>`}
+  const wk=D.weeks||{};
+
+  // Trailing 4 weeks
+  const trailing=getWeeklyTrailing(5);
+  const avgTrail=trailing.length>1?trailing.slice(1).reduce((s,w)=>s+w.revenue,0)/(trailing.length-1):0;
+
+  let h=`<div style="margin-bottom:24px"><div class="page-title">Weekly Sales Pulse</div><div class="page-sub">TW: ${wk.tw?.label||''}</div></div>`;
+  h+='<div class="kg" style="grid-template-columns:repeat(5,1fr)">';
+  h+=`<div class="kpi"><div class="kpi-l">This Week</div><div class="kpi-v">${F.$(ttw)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Last Week</div><div class="kpi-v">${F.$(tlw)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Same Week LY</div><div class="kpi-v">${F.$(tly)}</div></div>`;
+  h+=`<div class="kpi" style="border-color:${comp(ttw,tly)>=0?'var(--gn)':'var(--rd)'}"><div class="kpi-l">TW vs LY</div><div class="kpi-v">${compS(comp(ttw,tly))}</div></div>`;
+  h+=`<div class="kpi" style="border-color:var(--purple)"><div class="kpi-l">Next Week Est.</div><div class="kpi-v" style="color:var(--purple)">${F.$(avgTrail)}</div><div class="kpi-sub">4-wk avg</div></div>`;
+  h+='</div>';
+
+  // Channel table
+  h+='<div class="card"><div class="card-hd"><div class="card-t">This Week by Channel</div><button class="xb" onclick="xT(\'wpt\')">Export</button></div>';
+  h+='<table class="dt" id="wpt"><thead><tr><th style="width:220px">Channel</th><th class="n">This Week</th><th class="n">Last Week</th><th class="n">Same Wk LY</th><th class="n">TW vs LY</th><th class="n">Orders</th></tr></thead><tbody>';
+  h+=rows;
+  h+=`<tr style="font-weight:700;border-top:2px solid var(--ac)"><td>TOTAL</td><td class="n">${F.$(ttw)}</td><td class="n">${F.$(tlw)}</td><td class="n">${F.$(tly)}</td><td class="n">${compS(comp(ttw,tly))}</td><td class="n">${(D.tw||[]).reduce((s,r)=>s+r.orders,0)}</td></tr>`;
+  h+='</tbody></table></div>';
+
+  // Trailing 4 weeks
+  h+='<div class="card"><div class="card-t" style="margin-bottom:14px">Trailing 5 Weeks</div>';
+  h+='<table class="dt"><thead><tr><th>Week</th><th class="n">Revenue</th><th class="n">Orders</th><th class="n">vs Prior Wk</th></tr></thead><tbody>';
+  trailing.forEach((w,i)=>{
+    const prev=trailing[i+1];const wComp=prev&&prev.revenue>0?comp(w.revenue,prev.revenue):null;
+    h+=`<tr${i===0?' style="background:var(--acl)"':''}><td style="font-weight:${i===0?'700':'400'}">${i===0?'This Week':w.label}</td><td class="n">${F.$(w.revenue)}</td><td class="n">${F.n(w.orders)}</td><td class="n">${compS(wComp)}</td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  return h;
+};
+
+// ==================== COMP % ====================
+PG.comp=function(){
+  const ytdC=D.ytd_cust||[],ytdP=D.ytd_prior||[];
+  const totalYc=ytdC.reduce((s,r)=>s+r.revenue,0),totalYp=ytdP.reduce((s,r)=>s+r.revenue,0);
+  const totalComp=comp(totalYc,totalYp);
+  const ytdCCh=aggByChannel(ytdC),ytdPCh=aggByChannel(ytdP);
+
+  let h='<div style="margin-bottom:24px"><div class="page-title">Comp % Analysis</div></div>';
+  h+='<div class="kg" style="grid-template-columns:repeat(4,1fr)">';
+  h+=`<div class="kpi"><div class="kpi-l">YTD 25/26</div><div class="kpi-v">${F.$m(totalYc)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">YTD 24/25</div><div class="kpi-v">${F.$m(totalYp)}</div></div>`;
+  h+=`<div class="kpi" style="border-color:${totalComp>=0?'var(--gn)':'var(--rd)'}"><div class="kpi-l">YTD Comp</div><div class="kpi-v">${compS(totalComp)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">$ Growth</div><div class="kpi-v" style="color:${(totalYc-totalYp)>=0?'var(--gn)':'var(--rd)'}">${F.$(totalYc-totalYp)}</div></div>`;
+  h+='</div>';
+
+  // Best-in-class benchmarks
+  h+='<div class="card"><div class="card-t" style="margin-bottom:14px">Benchmark: Best-in-Class Omnichannel Specialty Food</div>';
+  h+='<div class="insight-box insight-purple"><strong>Industry context:</strong> Best-in-class specialty food brands (similar scale, multi-channel DTC+wholesale) typically target 15-25% annual revenue growth, with healthy channel mix of ~35% DTC, ~40% wholesale, ~15% grocery, ~10% corporate/other. Kanel\'s +27% comp is above the high end of this range.</div>';
+  h+='<table class="dt"><thead><tr><th>Metric</th><th class="n">Kanel Actual</th><th class="n">Best-in-Class Target</th><th class="n">Assessment</th></tr></thead><tbody>';
+  h+=`<tr><td>Annual Revenue Growth</td><td class="n">${compS(totalComp)}</td><td class="n">15-25%</td><td class="n"><span class="pos">Above Target</span></td></tr>`;
+  const ecomShare=(ytdCCh['Ecommerce']||{revenue:0}).revenue/totalYc*100;
+  h+=`<tr><td>DTC (Ecom+POS) Share</td><td class="n">${F.p(ecomShare+((ytdCCh['POS']||{revenue:0}).revenue/totalYc*100))}</td><td class="n">30-40%</td><td class="n">${ecomShare>25?'<span class="pos">Healthy</span>':'<span class="neg">Below Target</span>'}</td></tr>`;
+  const avgOrd=totalYc/(ytdC.reduce((s,r)=>s+r.orders,0)||1);
+  h+=`<tr><td>Average Order Value</td><td class="n">${F.$(avgOrd)}</td><td class="n">$150-$300</td><td class="n">${avgOrd>150?'<span class="pos">Strong</span>':'<span class="neg">Room to Grow</span>'}</td></tr>`;
+  const top10pct=ytdC.slice().sort((a,b)=>b.revenue-a.revenue).slice(0,Math.ceil(ytdC.length*0.1)).reduce((s,r)=>s+r.revenue,0)/totalYc*100;
+  h+=`<tr><td>Top 10% Customer Concentration</td><td class="n">${F.p(top10pct)}</td><td class="n">&lt;60%</td><td class="n">${top10pct<60?'<span class="pos">Diversified</span>':'<span class="neg">Concentrated</span>'}</td></tr>`;
+  h+='</tbody></table>';
+  h+='<div style="margin-top:12px;font-size:12px;color:var(--txm)">Benchmarks based on specialty food brands at $5M-$25M revenue across DTC, wholesale, grocery channels (Specialty Food Association data)</div></div>';
+
+  // Channel comp table
+  const allCh=[...new Set([...Object.keys(ytdCCh),...Object.keys(ytdPCh)])].sort();
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Channel YTD Comp</div><button class="xb" onclick="xT(\'chcomp\')">Export</button></div>';
+  h+='<table class="dt" id="chcomp"><thead><tr><th style="width:220px">Channel</th><th class="n">YTD 25/26</th><th class="n">YTD 24/25</th><th class="n">Comp %</th><th class="n">$ Change</th></tr></thead><tbody>';
+  allCh.forEach(ch=>{const c=(ytdCCh[ch]||{revenue:0}).revenue,p=(ytdPCh[ch]||{revenue:0}).revenue;h+=`<tr><td style="font-weight:500">${ch}</td><td class="n">${F.$f(c)}</td><td class="n">${F.$f(p)}</td><td class="n">${compS(comp(c,p))}</td><td class="n" style="color:${(c-p)>=0?'var(--gn)':'var(--rd)'}">$${Math.abs(c-p).toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>`});
+  h+='</tbody></table></div>';
+
+  // Monthly comp
+  const byMo={};(D.monthly||[]).forEach(r=>{byMo[r.yr+'-'+String(r.mo).padStart(2,'0')]=r.revenue});
+  const moComp=[];Object.keys(byMo).sort().forEach(k=>{const[y,m]=k.split('-').map(Number);const lyK=(y-1)+'-'+String(m).padStart(2,'0');if(byMo[lyK]!==undefined)moComp.push({month:F.mo(m)+' '+y,current:byMo[k],prior:byMo[lyK],comp:comp(byMo[k],byMo[lyK])})});
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Monthly YoY Comp</div><button class="xb" onclick="xT(\'mocomp\')">Export</button></div>';
+  h+='<table class="dt" id="mocomp"><thead><tr><th>Month</th><th class="n">Current</th><th class="n">Prior Year</th><th class="n">Comp %</th><th class="n">$ Change</th></tr></thead><tbody>';
+  moComp.reverse().forEach(r=>{h+=`<tr><td>${r.month}</td><td class="n">${F.$f(r.current)}</td><td class="n">${F.$f(r.prior)}</td><td class="n">${compS(r.comp)}</td><td class="n" style="color:${(r.current-r.prior)>=0?'var(--gn)':'var(--rd)'}">$${Math.abs(r.current-r.prior).toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>`});
+  h+='</tbody></table></div>';
+
+  // Gainers/Decliners
+  const cy=D.cust_yearly||[];const custByYr={};cy.forEach(r=>{if(!custByYr[r.customer])custByYr[r.customer]={};custByYr[r.customer][r.yr]=r.revenue});
+  const years=[...new Set(cy.map(r=>r.yr))].sort();const lY=years[years.length-1],pY=years[years.length-2];
+  const custComp=[];Object.entries(custByYr).forEach(([name,yrs])=>{const c=yrs[lY]||0,p=yrs[pY]||0;if(c>0||p>0)custComp.push({customer:name,current:c,prior:p,comp:comp(c,p),delta:c-p,channel:classify(name)})});
+  const up=custComp.filter(c=>c.delta>500).sort((a,b)=>b.delta-a.delta).slice(0,20);
+  const down=custComp.filter(c=>c.delta<-500).sort((a,b)=>a.delta-b.delta).slice(0,20);
+
+  h+='<div class="cr">';
+  h+='<div class="card"><div class="card-hd"><div class="card-t" style="color:var(--gn)">▲ Top Gainers</div><button class="xb" onclick="xT(\'cup\')">Export</button></div><div style="max-height:500px;overflow-y:auto"><table class="dt" id="cup"><thead><tr><th>#</th><th>Customer</th><th class="n">Current</th><th class="n">Prior</th><th class="n">$ Change</th></tr></thead><tbody>';
+  up.forEach((c,i)=>{h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${c.customer}</td><td class="n">${F.$f(c.current)}</td><td class="n">${F.$f(c.prior)}</td><td class="n pos">+${F.$f(c.delta)}</td></tr>`});
+  h+='</tbody></table></div></div>';
+  h+='<div class="card"><div class="card-hd"><div class="card-t" style="color:var(--rd)">▼ Top Decliners</div><button class="xb" onclick="xT(\'cdn\')">Export</button></div><div style="max-height:500px;overflow-y:auto"><table class="dt" id="cdn"><thead><tr><th>#</th><th>Customer</th><th class="n">Current</th><th class="n">Prior</th><th class="n">$ Change</th></tr></thead><tbody>';
+  down.forEach((c,i)=>{h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${c.customer}</td><td class="n">${F.$f(c.current)}</td><td class="n">${F.$f(c.prior)}</td><td class="n neg">${F.$f(c.delta)}</td></tr>`});
+  h+='</tbody></table></div></div></div>';
+  return h;
+};
+
+// ==================== CHANNEL ====================
+PG.chan=function(){
+  const cy=D.cust_yearly||[];const chYr={};cy.forEach(r=>{const ch=classify(r.customer);const k=ch+'|'+r.yr;if(!chYr[k])chYr[k]={revenue:0,orders:0};chYr[k].revenue+=r.revenue;chYr[k].orders+=r.orders});
+  const years=[...new Set(cy.map(r=>r.yr))].sort();const channels=[...new Set(cy.map(r=>classify(r.customer)))];
+  const sorted=channels.sort((a,b)=>{const la=(chYr[a+'|'+years[years.length-1]]||{revenue:0}).revenue,lb=(chYr[b+'|'+years[years.length-1]]||{revenue:0}).revenue;return lb-la});
+
+  let h='<div style="margin-bottom:24px"><div class="page-title">Channel Analysis</div><div class="page-sub">Calendar year comparison</div></div>';
+
+  // Insight: why is 2026 already so high
+  const latestYr=years[years.length-1];const priorYr=years[years.length-2];
+  const totLatest=channels.reduce((s,ch)=>s+(chYr[ch+'|'+latestYr]||{revenue:0}).revenue,0);
+  const totPrior=channels.reduce((s,ch)=>s+(chYr[ch+'|'+priorYr]||{revenue:0}).revenue,0);
+  
+  h+=`<div class="insight-box insight-blue"><strong>Why does ${latestYr} already look so high?</strong> The ${latestYr} column shows calendar year-to-date (Jan ${latestYr} to today). At ${F.$m(totLatest)} with only ~2 months elapsed, the daily run rate is ${F.$(totLatest/55)} — annualizing to ~${F.$m(totLatest/55*365)}. The prior full year was ${F.$m(totPrior)}. The key driver is wholesale order timing — large accounts front-load spring inventory in Jan/Feb, inflating early YTD numbers.</div>`;
+
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Channel Revenue by Year</div><button class="xb" onclick="xT(\'chtbl\')">Export</button></div>';
+  h+='<table class="dt" id="chtbl"><thead><tr><th style="width:220px">Channel</th>';years.forEach(y=>{h+=`<th class="n">${y}</th>`});h+='<th class="n">YoY</th></tr></thead><tbody>';
+  const tots=years.map(()=>0);
+  sorted.forEach(ch=>{h+=`<tr><td style="font-weight:500">${ch}</td>`;years.forEach((y,i)=>{const v=(chYr[ch+'|'+y]||{revenue:0}).revenue;tots[i]+=v;h+=`<td class="n">${F.$f(v)}</td>`});const v1=(chYr[ch+'|'+latestYr]||{revenue:0}).revenue,v0=(chYr[ch+'|'+priorYr]||{revenue:0}).revenue;h+=`<td class="n">${compS(comp(v1,v0))}</td></tr>`});
+  h+='<tr style="font-weight:700;border-top:2px solid var(--ac)"><td>TOTAL</td>';tots.forEach(v=>{h+=`<td class="n">${F.$f(v)}</td>`});h+=`<td class="n">${compS(comp(tots[tots.length-1],tots[tots.length-2]))}</td></tr></tbody></table></div>`;
+
+  // Channel donut for latest year
+  const chDonut=sorted.map((ch,i)=>({label:ch,value:(chYr[ch+'|'+latestYr]||{revenue:0}).revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-t" style="margin-bottom:10px">'+latestYr+' Channel Mix</div><div class="donut-wrap">'+donut(chDonut,160)+'<div class="donut-legend">'+donutLegend(chDonut)+'</div></div></div>';
+  return h;
+};
+
+// ==================== CATEGORY ====================
+PG.cat=function(){
+  const prods=(D.ytd_products||[]).map(p=>({...p,category:categorize(p.productNum,p.description)})).filter(p=>!['Subtotal','Shipping','Adjustments'].includes(p.category));
+  const cats={};prods.forEach(p=>{if(!cats[p.category])cats[p.category]={revenue:0,qty:0,count:0};cats[p.category].revenue+=p.revenue;cats[p.category].qty+=p.qty;cats[p.category].count++});
+  const catList=Object.entries(cats).filter(([k,v])=>v.revenue>0).sort((a,b)=>b[1].revenue-a[1].revenue);
+  const total=catList.reduce((s,[k,v])=>s+v.revenue,0);
+
+  let h='<div style="margin-bottom:24px"><div class="page-title">Category Performance</div><div class="page-sub">Fiscal YTD</div></div>';
+  h+='<div class="kg">';catList.slice(0,6).forEach(([cat,d],i)=>{h+=`<div class="kpi"><div class="kpi-l">${cat}</div><div class="kpi-v" style="color:${COLORS[i]}">${F.$(d.revenue)}</div><div class="kpi-sub">${F.p(d.revenue/total*100)} share · ${d.count} SKUs</div></div>`});h+='</div>';
+
+  const catDonut=catList.slice(0,7).map(([cat,d],i)=>({label:cat,value:d.revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-t" style="margin-bottom:10px">Category Mix</div><div class="donut-wrap">'+donut(catDonut,160)+'<div class="donut-legend">'+donutLegend(catDonut)+'</div></div></div>';
+
+  h+='<div class="card"><div class="card-hd"><div class="card-t">All Categories</div><button class="xb" onclick="xT(\'cattbl\')">Export</button></div>';
+  h+='<table class="dt" id="cattbl"><thead><tr><th>Category</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">Qty</th><th class="n">SKUs</th><th class="n">Rev/SKU</th></tr></thead><tbody>';
+  catList.forEach(([cat,d])=>{h+=`<tr><td style="font-weight:500">${cat}</td><td class="n">${F.$f(d.revenue)}</td><td class="n">${F.p(d.revenue/total*100)}</td><td class="n">${F.n(d.qty)}</td><td class="n">${d.count}</td><td class="n">${F.$f(d.revenue/d.count)}</td></tr>`});
+  h+='</tbody></table></div>';
+  return h;
+};
+
+// ==================== SKU PERFORMANCE ====================
+PG.sku=function(){
+  const prods=(D.ytd_products||[]).map(p=>({...p,category:categorize(p.productNum,p.description)})).filter(p=>!['Subtotal','Shipping','Adjustments'].includes(p.category)&&p.revenue>0).sort((a,b)=>b.revenue-a.revenue);
+  const total=prods.reduce((s,x)=>s+x.revenue,0);
+  const top20Rev=prods.slice(0,20).reduce((s,x)=>s+x.revenue,0);
+  const top80pct=prods.findIndex((p,i)=>{let c=0;for(let j=0;j<=i;j++)c+=prods[j].revenue;return c/total>=0.8})+1;
+
+  let h='<div style="margin-bottom:24px"><div class="page-title">SKU Performance</div><div class="page-sub">'+prods.length+' active products — Fiscal YTD</div></div>';
+
+  h+='<div class="kg" style="grid-template-columns:repeat(4,1fr)">';
+  h+=`<div class="kpi"><div class="kpi-l">Total Revenue</div><div class="kpi-v">${F.$m(total)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Active SKUs</div><div class="kpi-v">${prods.length}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Top 20 SKUs</div><div class="kpi-v">${F.p(top20Rev/total*100)}</div><div class="kpi-sub">of total revenue</div></div>`;
+  h+=`<div class="kpi" style="border-color:var(--purple)"><div class="kpi-l">80% Revenue</div><div class="kpi-v" style="color:var(--purple)">${top80pct} SKUs</div><div class="kpi-sub">out of ${prods.length}</div></div>`;
+  h+='</div>';
+
+  h+=`<div class="insight-box insight-purple"><strong>Pareto Analysis:</strong> ${top80pct} SKUs (${F.p(top80pct/prods.length*100)} of catalog) drive 80% of revenue. The remaining ${prods.length-top80pct} SKUs generate only 20%. Consider rationalizing the long tail — each low-velocity SKU carries inventory cost, warehouse space, and operational complexity.</div>`;
+
+  // Top 20 with cumulative %
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Top 20 Revenue Drivers</div></div>';
+  h+='<table class="dt"><thead><tr><th style="width:30px">#</th><th>Product</th><th>Category</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">Qty</th></tr></thead><tbody>';
+  prods.slice(0,20).forEach((x,i)=>{h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${(x.description||'').substring(0,50)}</td><td>${badgeCh(x.category||'Other')}</td><td class="n">${F.$f(x.revenue)}</td><td class="n">${F.p(x.revenue/total*100)}</td><td class="n">${F.n(x.qty)}</td></tr>`});
+  h+='</tbody></table></div>';
+
+  // Bottom performers
+  const bottom=prods.filter(p=>p.revenue>0&&p.revenue<100).sort((a,b)=>a.revenue-b.revenue).slice(0,15);
+  if(bottom.length>0){
+    h+=`<div class="insight-box insight-amber"><strong>Long tail alert:</strong> ${bottom.length}+ SKUs generating under $100 YTD. These represent potential candidates for discontinuation or bundling into collections.</div>`;
+  }
+
+  // Full table
+  h+='<div class="card"><div class="card-hd"><div class="card-t">All Products</div><button class="xb" onclick="xT(\'skutbl\')">Export</button></div>';
+  h+='<div style="max-height:600px;overflow-y:auto"><table class="dt" id="skutbl"><thead><tr><th>#</th><th>Product</th><th>Category</th><th class="n">Revenue</th><th class="n">Share</th><th class="n">Cumul %</th><th class="n">Qty</th></tr></thead><tbody>';
+  let cumul=0;prods.forEach((x,i)=>{cumul+=x.revenue;h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${(x.description||'').substring(0,50)}</td><td><span class="badge badge-who">${x.category||''}</span></td><td class="n">${F.$f(x.revenue)}</td><td class="n">${F.p(x.revenue/total*100)}</td><td class="n">${F.p(cumul/total*100)}</td><td class="n">${F.n(x.qty)}</td></tr>`});
+  h+='</tbody></table></div></div>';
+  return h;
+};
+
+// ==================== YOY TRENDS ====================
+PG.yoy=function(){
+  const byYM={};(D.monthly||[]).forEach(r=>{byYM[r.yr+'-'+String(r.mo).padStart(2,'0')]=r});
+  const years=[...new Set((D.monthly||[]).map(r=>r.yr))].sort();
+  let h='<div style="margin-bottom:24px"><div class="page-title">Year-over-Year Trends</div></div>';
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Monthly Revenue</div><button class="xb" onclick="xT(\'yoytbl\')">Export</button></div>';
+  h+='<table class="dt" id="yoytbl"><thead><tr><th>Month</th>';years.forEach(y=>{h+=`<th class="n">${y}</th>`});h+='<th class="n">YoY</th></tr></thead><tbody>';
+  [1,2,3,4,5,6,7,8,9,10,11,12].forEach(m=>{h+=`<tr><td>${F.mo(m)}</td>`;let vals=[];years.forEach(y=>{const k=y+'-'+String(m).padStart(2,'0');const v=byYM[k]?byYM[k].revenue:null;vals.push(v);h+=`<td class="n">${v!==null?F.$f(v):'\u2014'}</td>`});const yoy=vals.length>=2&&vals[vals.length-1]!==null&&vals[vals.length-2]!==null?comp(vals[vals.length-1],vals[vals.length-2]):null;h+=`<td class="n">${compS(yoy)}</td></tr>`});
+  h+='</tbody></table></div>';
+  return h;
+};
+
+// ==================== WHOLESALE ====================
+PG.who=function(){
+  const all=(D.ytd_cust||[]).filter(r=>!r.customer.toLowerCase().includes('shopify')).sort((a,b)=>b.revenue-a.revenue);
+  const total=all.reduce((s,r)=>s+r.revenue,0);
+  let h='<div style="margin-bottom:24px"><div class="page-title">Wholesale Accounts</div><div class="page-sub">'+all.length+' non-Shopify accounts — Fiscal YTD</div></div>';
+  h+='<div class="card"><div class="card-hd"><div class="card-t">All Accounts</div><button class="xb" onclick="xT(\'whotbl\')">Export</button></div>';
+  h+='<div style="max-height:700px;overflow-y:auto"><table class="dt" id="whotbl"><thead><tr><th style="width:30px">#</th><th>Account</th><th>Channel</th><th class="n" style="width:130px">Revenue</th><th class="n">Share</th><th class="n">Orders</th><th class="n">Avg Order</th></tr></thead><tbody>';
+  all.forEach((c,i)=>{h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${c.customer}</td><td>${badgeCh(classify(c.customer))}</td><td class="n">${F.$f(c.revenue)}</td><td class="n">${F.p(c.revenue/total*100)}</td><td class="n">${F.n(c.orders)}</td><td class="n">${F.$f(c.revenue/c.orders)}</td></tr>`});
+  h+='</tbody></table></div></div>';
+  return h;
+};
+
+// ==================== KIM'S REPORT ====================
+PG.kim=function(){
+  const janD=D.jan_daily||[];const janP=D.jan_products||[];
+  if(!janD.length) return'<div class="card" style="padding:40px;text-align:center;color:var(--txm)"><div class="page-title">Kim\'s Super Urgent Report</div><p style="margin-top:12px">January data not available. Make sure proxy v3 is running with the jan_daily and jan_products queries.</p></div>';
+
+  // Aggregate by day
+  const byDay={};const byProv={};const byCh={};const byDow={};let janTotal=0,janOrders=0;
+  janD.forEach(r=>{
+    const dt=r.dt.split('T')[0]||r.dt;const d=new Date(dt);const dow=d.getDay();const dayName=F.dow(dow);
+    if(!byDay[dt])byDay[dt]={revenue:0,orders:0,date:dt};byDay[dt].revenue+=r.revenue;byDay[dt].orders+=r.orders;
+    const prov=r.province||'Unknown';if(!byProv[prov])byProv[prov]={revenue:0,orders:0};byProv[prov].revenue+=r.revenue;byProv[prov].orders+=r.orders;
+    const ch=r.className||'Unknown';if(!byCh[ch])byCh[ch]={revenue:0,orders:0};byCh[ch].revenue+=r.revenue;byCh[ch].orders+=r.orders;
+    if(!byDow[dayName])byDow[dayName]={revenue:0,orders:0,count:0};byDow[dayName].revenue+=r.revenue;byDow[dayName].orders+=r.orders;byDow[dayName].count++;
+    janTotal+=r.revenue;janOrders+=r.orders;
+  });
+
+  const days=Object.values(byDay).sort((a,b)=>a.date.localeCompare(b.date));
+  const provList=Object.entries(byProv).sort((a,b)=>b[1].revenue-a[1].revenue);
+  const chList=Object.entries(byCh).sort((a,b)=>b[1].revenue-a[1].revenue);
+  const dowList=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>({day:d,...(byDow[d]||{revenue:0,orders:0,count:0})}));
+
+  let h='<div style="margin-bottom:24px"><div class="page-title" style="color:var(--rd)">Kim\'s Super Urgent Report</div><div class="page-sub">January 2026 — Full Month Analysis</div></div>';
+
+  h+='<div class="kg" style="grid-template-columns:repeat(4,1fr)">';
+  h+=`<div class="kpi"><div class="kpi-l">Jan Revenue</div><div class="kpi-v">${F.$f(janTotal)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Jan Orders</div><div class="kpi-v">${F.n(janOrders)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Daily Avg</div><div class="kpi-v">${F.$(janTotal/31)}</div></div>`;
+  h+=`<div class="kpi"><div class="kpi-l">Avg Order</div><div class="kpi-v">${F.$(janTotal/janOrders)}</div></div>`;
+  h+='</div>';
+
+  // Insights
+  const bestDay=days.reduce((b,d)=>d.revenue>b.revenue?d:b,{revenue:0});
+  const worstDay=days.filter(d=>d.revenue>0).reduce((w,d)=>d.revenue<w.revenue?d:w,{revenue:Infinity});
+  const topProv=provList[0];
+  const bestDow=dowList.reduce((b,d)=>d.revenue>b.revenue?d:b,{revenue:0});
+
+  h+=`<div class="insight-box insight-green"><strong>Peak day:</strong> ${bestDay.date} at ${F.$f(bestDay.revenue)} (${F.n(bestDay.orders)} orders). This was ${F.p(bestDay.revenue/janTotal*100)} of the entire month in a single day.</div>`;
+  h+=`<div class="insight-box insight-blue"><strong>Geographic concentration:</strong> ${topProv?topProv[0]:''} drives ${topProv?F.p(topProv[1].revenue/janTotal*100):''}  of January revenue. ${provList.length} provinces/states had activity.</div>`;
+  h+=`<div class="insight-box insight-purple"><strong>Day-of-week pattern:</strong> ${bestDow.day}s are the strongest (avg ${F.$(bestDow.count>0?bestDow.revenue/bestDow.count:0)}/day). Consider aligning promotions and email sends to capitalize on peak ordering days.</div>`;
+
+  // Two columns: Geo donut + Channel donut
+  h+='<div class="cr">';
+  const geoDonut=provList.slice(0,8).map(([p,d],i)=>({label:p,value:d.revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-t" style="margin-bottom:10px">Revenue by Province/State</div><div class="donut-wrap">'+donut(geoDonut,150)+'<div class="donut-legend">'+donutLegend(geoDonut)+'</div></div></div>';
+  const chDonut=chList.map(([ch,d],i)=>({label:ch,value:d.revenue,color:COLORS[i%COLORS.length]}));
+  h+='<div class="card"><div class="card-t" style="margin-bottom:10px">Revenue by Channel (QB Class)</div><div class="donut-wrap">'+donut(chDonut,150)+'<div class="donut-legend">'+donutLegend(chDonut)+'</div></div></div>';
+  h+='</div>';
+
+  // Day of week
+  h+='<div class="card"><div class="card-t" style="margin-bottom:14px">Sales by Day of Week</div>';
+  h+='<table class="dt"><thead><tr><th>Day</th><th class="n">Revenue</th><th class="n">Orders</th><th class="n">Avg/Day</th><th class="n">Share</th></tr></thead><tbody>';
+  dowList.forEach(d=>{h+=`<tr><td style="font-weight:500">${d.day}</td><td class="n">${F.$f(d.revenue)}</td><td class="n">${F.n(d.orders)}</td><td class="n">${F.$(d.count>0?d.revenue/d.count:0)}</td><td class="n">${F.p(d.revenue/janTotal*100)}</td></tr>`});
+  h+='</tbody></table></div>';
+
+  // Daily sales
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Daily Sales — January 2026</div><button class="xb" onclick="xT(\'kimday\')">Export</button></div>';
+  h+='<table class="dt" id="kimday"><thead><tr><th>Date</th><th>Day</th><th class="n">Revenue</th><th class="n">Orders</th><th class="n">Avg Order</th></tr></thead><tbody>';
+  days.forEach(d=>{const dt=new Date(d.date);const dn=F.dow(dt.getDay());h+=`<tr><td>${d.date}</td><td>${dn}</td><td class="n">${F.$f(d.revenue)}</td><td class="n">${F.n(d.orders)}</td><td class="n">${d.orders>0?F.$(d.revenue/d.orders):'\u2014'}</td></tr>`});
+  h+='</tbody></table></div>';
+
+  // Geographic breakdown
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Geographic Breakdown</div><button class="xb" onclick="xT(\'kgeo\')">Export</button></div>';
+  h+='<table class="dt" id="kgeo"><thead><tr><th>Province/State</th><th class="n">Revenue</th><th class="n">Orders</th><th class="n">Share</th><th class="n">Avg Order</th></tr></thead><tbody>';
+  provList.forEach(([p,d])=>{h+=`<tr><td style="font-weight:500">${p}</td><td class="n">${F.$f(d.revenue)}</td><td class="n">${F.n(d.orders)}</td><td class="n">${F.p(d.revenue/janTotal*100)}</td><td class="n">${d.orders>0?F.$(d.revenue/d.orders):'\u2014'}</td></tr>`});
+  h+='</tbody></table></div>';
+
+  // Top products
+  h+='<div class="card"><div class="card-hd"><div class="card-t">Top Products — January</div><button class="xb" onclick="xT(\'kprod\')">Export</button></div>';
+  h+='<div style="max-height:500px;overflow-y:auto"><table class="dt" id="kprod"><thead><tr><th>#</th><th>Product</th><th class="n">Revenue</th><th class="n">Qty</th></tr></thead><tbody>';
+  (janP||[]).slice(0,30).forEach((p,i)=>{h+=`<tr><td style="color:var(--txd)">${i+1}</td><td>${(p.description||'').substring(0,50)}</td><td class="n">${F.$f(p.revenue)}</td><td class="n">${F.n(p.qty)}</td></tr>`});
+  h+='</tbody></table></div></div>';
+
+  h+='<div class="note">Note: Hourly sales breakdown is not available — Fishbowl stores order completion as date-only (no timestamp). For hourly analysis, Shopify order data would need to be cross-referenced. Day-of-week and daily patterns are the most granular time analysis available from this data source.</div>';
+  return h;
+};
+
+// NAV
+document.querySelectorAll('.nav-item[data-page]').forEach(e=>{e.addEventListener('click',()=>{currentPage=e.dataset.page;document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===currentPage));if(D)renderCurrent()})});
+</script>
+</body></html>
