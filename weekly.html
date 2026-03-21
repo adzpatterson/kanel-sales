@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanel · Weekly Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --brand:#2d6a4f;
+  --brand-lt:#52b788;
+  --bg:#f5f6f8;
+  --surface:#ffffff;
+  --border:#e4e6eb;
+  --text:#1a1f36;
+  --muted:#6b7280;
+  --pos:#16a34a;
+  --neg:#dc2626;
+  --pos-bg:#dcfce7;
+  --neg-bg:#fee2e2;
+  --neutral-bg:#f3f4f6;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:13px;
+  display:flex;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* ──────────── SIDEBAR ──────────── */
+.sidebar{
+  width:210px;min-width:210px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+
+.sb-logo{
+  display:flex;align-items:center;gap:10px;
+  padding:15px 16px;
+  border-bottom:1px solid var(--border);
+}
+.logo-k{
+  width:30px;height:30px;
+  background:var(--brand);
+  border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:15px;
+  flex-shrink:0;
+}
+.sb-logo .bn{font-weight:700;font-size:12.5px;letter-spacing:.08em;color:var(--brand);text-transform:uppercase}
+.sb-logo .bs{font-size:9.5px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:1px}
+
+.sb-sec{padding:15px 16px 8px}
+.sb-lbl{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+
+.week-sel{
+  width:100%;padding:7px 9px;
+  border:1px solid var(--border);border-radius:6px;
+  font-family:'DM Sans',sans-serif;font-size:11.5px;color:var(--text);
+  background:var(--bg);cursor:pointer;
+}
+.week-sel:focus{outline:2px solid var(--brand);outline-offset:1px}
+
+.ch-list{display:flex;flex-direction:column;gap:2px;padding-bottom:12px}
+.ch-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 5px;border-radius:5px;
+  cursor:pointer;user-select:none;
+  transition:background .1s,opacity .15s;
+}
+.ch-item:hover{background:var(--bg)}
+.ch-item.off{opacity:.3}
+.ch-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ch-name{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.sb-foot{
+  margin-top:auto;padding:11px 16px;
+  border-top:1px solid var(--border);
+  font-size:10.5px;color:var(--muted);
+}
+.sb-foot a{color:var(--brand);text-decoration:none}
+.sb-foot a:hover{text-decoration:underline}
+
+/* ──────────── MAIN ──────────── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+
+.top-bar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 22px;
+  height:62px;
+  display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:10;
+}
+
+/* Report switcher */
+.report-switcher{position:relative;}
+.report-switcher-btn{
+  display:flex;align-items:center;gap:8px;
+  background:none;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px;
+  padding:0;line-height:1;
+}
+.rs-chevron{
+  display:flex;align-items:center;justify-content:center;
+  width:20px;height:20px;background:var(--bg);border:1px solid var(--border);
+  border-radius:4px;flex-shrink:0;transition:background .12s;
+}
+.report-switcher-btn:hover .rs-chevron{background:var(--pos-bg);border-color:var(--brand-lt);}
+.rs-chevron svg{transition:transform .18s;}
+.report-switcher.open .rs-chevron svg{transform:rotate(180deg);}
+.report-switcher.open .rs-chevron{background:var(--pos-bg);border-color:var(--brand-lt);}
+.rs-menu{
+  display:none;
+  position:absolute;top:calc(100% + 10px);left:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:7px;box-shadow:0 6px 24px rgba(0,0,0,0.10);
+  min-width:240px;z-index:200;overflow:hidden;
+}
+.report-switcher.open .rs-menu{display:block;}
+.rs-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 15px;text-decoration:none;
+  font-size:13px;font-weight:600;color:var(--text);
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;
+}
+.rs-item:last-child{border-bottom:none;}
+.rs-item:hover{background:var(--bg);}
+.rs-item.active{background:#f0fdf8;}
+.rs-item-icon{width:32px;height:32px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rs-item-text .rs-name{font-size:12px;font-weight:700;color:var(--text);}
+.rs-item-text .rs-desc{font-size:10px;color:var(--muted);font-weight:400;margin-top:1px;}
+.rs-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#dcfce7;color:#16a34a;margin-left:auto;white-space:nowrap;}
+
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.bw{background:var(--brand);color:#fff}
+.bd{background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:400;font-size:11.5px}
+.bf{margin-left:auto;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.upd{font-size:10px;color:var(--muted)}
+
+/* ──────────── CONTENT ──────────── */
+.content{padding:18px 22px;display:flex;flex-direction:column;gap:16px}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+.kpi{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:15px 16px;
+  position:relative;overflow:hidden;
+}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi:nth-child(1)::before{background:var(--brand)}
+.kpi:nth-child(2)::before{background:var(--brand-lt)}
+.kpi:nth-child(3)::before{background:#3b82f6}
+.kpi:nth-child(4)::before{background:#f59e0b}
+
+.kpi-lbl{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.kpi-val{font-size:27px;font-weight:700;letter-spacing:-1px;line-height:1;font-family:'DM Mono',monospace;margin-bottom:7px}
+.kpi-deltas{display:flex;gap:7px;flex-wrap:wrap}
+.kpi-sub{font-size:10.5px;color:var(--muted);margin-top:4px}
+
+.dlt{font-size:10.5px;font-weight:500;padding:2px 6px;border-radius:4px}
+.dlt.pos{color:var(--pos);background:var(--pos-bg)}
+.dlt.neg{color:var(--neg);background:var(--neg-bg)}
+.dlt.neu{color:var(--muted);background:var(--neutral-bg)}
+
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:1fr 290px;gap:12px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px}
+.c-title{font-size:12px;font-weight:600;margin-bottom:2px}
+.c-sub{font-size:10.5px;color:var(--muted);margin-bottom:12px}
+.c-wrap{position:relative}
+
+/* Scorecard */
+.sc-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.sc-tbl th{
+  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);text-align:right;
+  padding:7px 9px;background:var(--bg);
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.sc-tbl th:first-child{text-align:left}
+.sc-tbl td{
+  padding:8px 9px;text-align:right;
+  border-bottom:1px solid var(--border);
+  font-family:'DM Mono',monospace;font-size:11px;
+}
+.sc-tbl td:first-child{
+  text-align:left;font-family:'DM Sans',sans-serif;
+  font-weight:500;font-size:11.5px;
+}
+.sc-tbl tbody tr:last-child td{
+  font-weight:600;background:#fafafa;
+  border-top:2px solid var(--border);border-bottom:none;
+}
+.sc-tbl tbody tr:not(:last-child):hover td{background:#fafbfc}
+
+.ch-pill{display:flex;align-items:center;gap:7px}
+.ch-pill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Trend / YTD */
+.ytd-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Loading */
+#loading{
+  position:fixed;inset:0;
+  background:rgba(248,249,250,.95);
+  display:flex;align-items:center;justify-content:center;
+  z-index:200;flex-direction:column;gap:12px;
+}
+.spin{
+  width:26px;height:26px;
+  border:3px solid var(--border);border-top-color:var(--brand);
+  border-radius:50%;animation:sp .65s linear infinite;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spin"></div>
+  <div style="font-size:13px;color:var(--muted)">Loading weekly data...</div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-k">K</div>
+    <div>
+      <div class="bn">Kanel</div>
+      <div class="bs">Weekly Sales</div>
+    </div>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Select Week</div>
+    <select class="week-sel" id="weekSel" onchange="onWeekChange(this.value)"></select>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Channels</div>
+    <div class="ch-list" id="chList"></div>
+  </div>
+
+  <div class="sb-foot">
+    <a href="https://adzpatterson.github.io/kanel-sales/">&#8592; Sales Hub</a>
+    <div id="updAt" style="margin-top:4px"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="top-bar">
+    <!-- Report switcher -->
+    <div class="report-switcher" id="reportSwitcher">
+      <button class="report-switcher-btn" onclick="toggleReportMenu(event)" aria-haspopup="true">
+        <span class="rs-label">Weekly Report</span>
+        <span class="rs-chevron">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
+      <div class="rs-menu" role="menu">
+        <a class="rs-item" href="index.html" role="menuitem">
+          <div class="rs-item-icon" style="background:#f3f4f6;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="3" width="12" height="2" rx="1" fill="#111"/>
+              <rect x="2" y="7" width="8" height="2" rx="1" fill="#555"/>
+              <rect x="2" y="11" width="10" height="2" rx="1" fill="#555"/>
+            </svg>
+          </div>
+          <div class="rs-item-text">
+            <div class="rs-name">Weekly Summary</div>
+            <div class="rs-desc">KPIs, channel mix, scorecard</div>
+          </div>
+        </a>
+        <div class="rs-item active" role="menuitem">
+          <div class="rs-item-icon" style="background:#f0fdf8;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="9" width="2.5" height="5" rx="1" fill="#2d6a4f"/>
+              <rect x="6" y="6" width="2.5" height="8" rx="1" fill="#2d6a4f" opacity=".7"/>
+              <rect x="10" y="3" width="2.5" height="11" rx="1" fill="#2d6a4f" opacity=".45"/>
+              <path d="M2 4l4-2 4 3 3-2" stroke="#2d6a4f" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="rs-item-text">
+            <div class="rs-name">Full Weekly Report</div>
+            <div class="rs-desc">Trend, YTD, deep scorecard</div>
+          </div>
+          <span class="rs-badge">Current</span>
+        </div>
+      </div>
+    </div>
+
+    <span class="badge bw" id="wkBadge">Week #--</span>
+    <span class="badge bd" id="wkRange">Loading&hellip;</span>
+    <span class="badge bf" id="fyBadge">FY --/--</span>
+    <span class="upd" id="updLabel"></span>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi" id="kpi-rev">
+        <div class="kpi-lbl">TW Revenue</div>
+        <div class="kpi-val">--</div>
+        <div class="kpi-deltas">
+          <span class="dlt neu vs-lw">--</span>
+          <span class="dlt neu vs-ly">--</span>
+        </div>
+      </div>
+      <div class="kpi" id="kpi-gm">
+        <div class="kpi-lbl">TW Gross Margin</div>
+        <div class="kpi-val">--</div>
+        <div class="kpi-deltas">
+          <span class="dlt neu vs-lw">--</span>
+          <span class="dlt neu vs-ly">--</span>
+        </div>
+        <div class="kpi-sub"></div>
+      </div>
+      <div class="kpi" id="kpi-txn">
+        <div class="kpi-lbl">TW Transactions</div>
+        <div class="kpi-val">--</div>
+        <div class="kpi-deltas">
+          <span class="dlt neu vs-lw">--</span>
+          <span class="dlt neu vs-ly">--</span>
+        </div>
+      </div>
+      <div class="kpi" id="kpi-aov">
+        <div class="kpi-lbl">$ / Transaction</div>
+        <div class="kpi-val">--</div>
+        <div class="kpi-deltas">
+          <span class="dlt neu vs-lw">--</span>
+          <span class="dlt neu vs-ly">--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="c-title">TW vs LW vs LY &mdash; Revenue by Channel</div>
+        <div class="c-sub" id="barSub">--</div>
+        <div class="c-wrap" style="height:210px"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="c-title">Channel Mix</div>
+        <div class="c-sub">TW Revenue Share</div>
+        <div class="c-wrap" style="height:210px"><canvas id="donutChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SCORECARD -->
+    <div class="card">
+      <div class="c-title">Channel Scorecard</div>
+      <div class="c-sub" id="scSub">--</div>
+      <div style="overflow-x:auto">
+        <table class="sc-tbl">
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th>TW Sales</th>
+              <th>LW Sales</th>
+              <th>LY Sales</th>
+              <th>TW vs LW</th>
+              <th>TW vs LY</th>
+              <th>YTD CY</th>
+              <th>YTD LY</th>
+              <th>YTD Comp%</th>
+              <th>TW Trans</th>
+              <th>LW Trans</th>
+              <th>TW $/Trans</th>
+            </tr>
+          </thead>
+          <tbody id="scBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12-WEEK TREND -->
+    <div class="card">
+      <div class="c-title">12-Week Revenue Trend &mdash; TW Highlighted</div>
+      <div class="c-sub" id="trendSub">--</div>
+      <div class="c-wrap" style="height:230px"><canvas id="trendChart"></canvas></div>
+    </div>
+
+    <!-- YTD -->
+    <div class="ytd-row">
+      <div class="card">
+        <div class="c-title">YTD Revenue by Channel</div>
+        <div class="c-sub" id="ytdRevSub">--</div>
+        <div class="c-wrap" style="height:210px"><canvas id="ytdRevChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="c-title">YTD Margin by Channel</div>
+        <div class="c-sub" id="ytdGMSub">--</div>
+        <div class="c-wrap" style="height:210px"><canvas id="ytdGMChart"></canvas></div>
+      </div>
+    </div>
+
+    <div style="height:6px"></div>
+  </div><!-- /content -->
+</main>
+
+<script>
+const KV = 'https://kanel-weekly.kanelhub.workers.dev';
+
+// ── Report switcher ────────────────────────────────────────
+function toggleReportMenu(e){
+  e.stopPropagation();
+  document.getElementById('reportSwitcher').classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  var sw=document.getElementById('reportSwitcher');
+  if(sw&&!sw.contains(e.target))sw.classList.remove('open');
+});
+
+const CH_COLORS = {
+  'Corporate':               '#1e293b',
+  'Ecommerce':               '#c0392b',
+  'Grocery':                 '#0d9488',
+  'POS':                     '#2563eb',
+  'Wholesale: DYA':          '#d97706',
+  'Wholesale: House Account':'#7c3aed'
+};
+const CH_ORDER = ['Corporate','Ecommerce','Grocery','POS','Wholesale: DYA','Wholesale: House Account'];
+const CH_SHORT = {
+  'Corporate':'Corporate',
+  'Ecommerce':'Ecommerce',
+  'Grocery':'Grocery',
+  'POS':'POS',
+  'Wholesale: DYA':'WS: DYA',
+  'Wholesale: House Account':'WS: House Acct'
+};
+
+let data = null;
+let selStart = null;
+let activeCh = new Set(Object.keys(CH_COLORS));
+let charts = {};
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const r = await fetch(KV);
+    data = await r.json();
+
+    const dt = new Date(data.updated);
+    document.getElementById('updAt').textContent =
+      'Updated ' + dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}) +
+      ' ' + dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+    buildWeekSel();
+    buildChList();
+
+    selStart = data.weeks.tw.from;
+    document.getElementById('weekSel').value = selStart;
+
+    renderAll();
+    document.getElementById('loading').style.display = 'none';
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      '<div style="color:#dc2626;font-size:13px">Failed to load data. Check console.</div>';
+    console.error(e);
+  }
+});
+
+// ── WEEK SELECTOR ─────────────────────────────────────────────────────────
+function buildWeekSel() {
+  const sel = document.getElementById('weekSel');
+  const seen = new Set();
+  const wks = [];
+  for (const r of data.weekly_history) {
+    if (!seen.has(r.wkStart)) { seen.add(r.wkStart); wks.push(r); }
+  }
+  wks.sort((a,b) => b.wkStart.localeCompare(a.wkStart));
+
+  sel.innerHTML = '';
+  let lastFY = null;
+  for (const w of wks) {
+    if (w.fy !== lastFY) {
+      const g = document.createElement('optgroup');
+      g.label = 'FY ' + w.fy;
+      sel.appendChild(g);
+      lastFY = w.fy;
+    }
+    const o = document.createElement('option');
+    o.value = w.wkStart;
+    o.textContent = `W${w.week}  ·  ${fmtShort(w.wkStart)} \u2013 ${fmtShort(w.wkEnd)}`;
+    sel.lastChild.appendChild(o);
+  }
+}
+
+function onWeekChange(v) { selStart = v; renderAll(); }
+
+// ── CHANNEL LIST ──────────────────────────────────────────────────────────
+function buildChList() {
+  const list = document.getElementById('chList');
+  list.innerHTML = '';
+  for (const ch of CH_ORDER) {
+    const d = document.createElement('div');
+    d.className = 'ch-item';
+    d.dataset.ch = ch;
+    d.innerHTML = `<div class="ch-dot" style="background:${CH_COLORS[ch]}"></div><div class="ch-name">${CH_SHORT[ch]}</div>`;
+    d.addEventListener('click', () => {
+      if (activeCh.has(ch)) {
+        if (activeCh.size <= 1) return;
+        activeCh.delete(ch); d.classList.add('off');
+      } else {
+        activeCh.add(ch); d.classList.remove('off');
+      }
+      renderAll();
+    });
+    list.appendChild(d);
+  }
+}
+
+// ── DATA HELPERS ──────────────────────────────────────────────────────────
+function rowsAt(wkStart) {
+  return data.weekly_history.filter(r => r.wkStart === wkStart && activeCh.has(r.ch));
+}
+function rowsWeek(fy, wk) {
+  return data.weekly_history.filter(r => r.fy === fy && r.week === wk && activeCh.has(r.ch));
+}
+function rowsYTD(fy, upTo) {
+  return data.weekly_history.filter(r => r.fy === fy && r.week <= upTo && activeCh.has(r.ch));
+}
+
+function agg(rows) {
+  return rows.reduce((a,r) => ({
+    rev:  a.rev  + r.rev,
+    ord:  a.ord  + r.orders,
+    cost: a.cost + r.cost,
+    gm:   a.gm   + (r.rev - r.cost)
+  }), {rev:0, ord:0, cost:0, gm:0});
+}
+
+function aggByCh(rows) {
+  const m = {};
+  for (const r of rows) {
+    if (!m[r.ch]) m[r.ch] = {rev:0, ord:0, cost:0, gm:0};
+    m[r.ch].rev  += r.rev;
+    m[r.ch].ord  += r.orders;
+    m[r.ch].cost += r.cost;
+    m[r.ch].gm   += r.rev - r.cost;
+  }
+  return m;
+}
+
+// ── FORMAT ────────────────────────────────────────────────────────────────
+function fmtK(v) {
+  const a = Math.abs(v);
+  if (a >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (a >= 1e3) return '$' + (v/1e3).toFixed(1) + 'K';
+  return '$' + Math.round(v).toLocaleString();
+}
+
+function fmtShort(d) {
+  const dt = new Date(d + 'T12:00:00');
+  const mo = dt.toLocaleString('en-US',{month:'short'});
+  return `${mo} ${dt.getDate()}/${String(dt.getFullYear()).slice(2)}`;
+}
+
+function pct(v, base) {
+  if (!base || base === 0) return {s:'--', cls:'neu'};
+  const p = (v - base) / Math.abs(base) * 100;
+  const arrow = p >= 0 ? '\u25b2' : '\u25bc';
+  return {s: `${arrow} ${Math.abs(p).toFixed(1)}%`, cls: p >= 0 ? 'pos' : 'neg'};
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────
+function renderAll() {
+  const anchor = data.weekly_history.find(r => r.wkStart === selStart);
+  if (!anchor) return;
+
+  const twFY = anchor.fy;
+  const twWk = anchor.week;
+  const twEnd = anchor.wkEnd;
+  const lyFY = twFY === '2025/26' ? '2024/25' : '2023/24';
+
+  // Row sets
+  const twRows = rowsAt(selStart);
+  const lwRows = rowsWeek(twFY, twWk - 1);
+  const lyRows = rowsWeek(lyFY, twWk);
+  const ytdCY  = rowsYTD(twFY, twWk);
+  const ytdLY  = rowsYTD(lyFY, twWk);
+
+  // Aggregates
+  const tw = agg(twRows), lw = agg(lwRows), ly = agg(lyRows);
+  const twBC = aggByCh(twRows), lwBC = aggByCh(lwRows), lyBC = aggByCh(lyRows);
+  const ytdCYBC = aggByCh(ytdCY), ytdLYBC = aggByCh(ytdLY);
+
+  // Header
+  document.getElementById('wkBadge').textContent = `Week #${twWk}`;
+  document.getElementById('wkRange').textContent = `${fmtShort(selStart)} \u2013 ${fmtShort(twEnd)}`;
+  document.getElementById('fyBadge').textContent = `FY ${twFY}`;
+  document.getElementById('barSub').textContent  = `Week #${twWk} \u00b7 ${twFY}`;
+  document.getElementById('scSub').textContent   = `Week #${twWk} \u00b7 ${fmtShort(selStart)} \u2013 ${fmtShort(twEnd)}`;
+  document.getElementById('trendSub').textContent= `Last 12 weeks \u00b7 FY ${twFY} vs FY ${lyFY}`;
+  document.getElementById('ytdRevSub').textContent = `W1\u2013W${twWk} \u00b7 ${twFY} vs ${lyFY}`;
+  document.getElementById('ytdGMSub').textContent  = `W1\u2013W${twWk} \u00b7 ${twFY} vs ${lyFY}`;
+
+  renderKPIs(tw, lw, ly);
+  renderBar(twBC, lwBC, lyBC);
+  renderDonut(twBC);
+  renderScorecard(twBC, lwBC, lyBC, ytdCYBC, ytdLYBC);
+  renderTrend(twFY, lyFY, twWk);
+  renderYTD(ytdCYBC, ytdLYBC);
+}
+
+// ── KPI CARDS ─────────────────────────────────────────────────────────────
+function renderKPIs(tw, lw, ly) {
+  const twAOV = tw.ord > 0 ? tw.rev / tw.ord : 0;
+  const lwAOV = lw.ord > 0 ? lw.rev / lw.ord : 0;
+  const lyAOV = ly.ord > 0 ? ly.rev / ly.ord : 0;
+
+  setKPI('kpi-rev', fmtK(tw.rev),     pct(tw.rev, lw.rev), pct(tw.rev, ly.rev));
+  setKPI('kpi-gm',  fmtK(tw.gm),      pct(tw.gm,  lw.gm),  pct(tw.gm,  ly.gm),
+    tw.rev > 0 ? (tw.gm/tw.rev*100).toFixed(1)+'% margin' : '');
+  setKPI('kpi-txn', tw.ord.toLocaleString(), pct(tw.ord, lw.ord), pct(tw.ord, ly.ord));
+  setKPI('kpi-aov', fmtK(twAOV),      pct(twAOV, lwAOV),   pct(twAOV, lyAOV));
+}
+
+function setKPI(id, val, vsLW, vsLY, sub) {
+  const el = document.getElementById(id);
+  el.querySelector('.kpi-val').textContent = val;
+  const lw = el.querySelector('.vs-lw');
+  const ly = el.querySelector('.vs-ly');
+  lw.textContent = vsLW.s + ' vs LW'; lw.className = 'dlt ' + vsLW.cls;
+  ly.textContent = vsLY.s + ' vs LY'; ly.className = 'dlt ' + vsLY.cls;
+  const subEl = el.querySelector('.kpi-sub');
+  if (subEl && sub !== undefined) subEl.textContent = sub;
+}
+
+// ── BAR CHART ─────────────────────────────────────────────────────────────
+function renderBar(twBC, lwBC, lyBC) {
+  const chs = CH_ORDER.filter(c => activeCh.has(c));
+  const labels = chs.map(c => CH_SHORT[c]);
+  const colors = chs.map(c => CH_COLORS[c]);
+
+  const cfg = {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'TW', data: chs.map(c=>(twBC[c]||{rev:0}).rev), backgroundColor: colors,                    borderRadius:3 },
+        { label:'LW', data: chs.map(c=>(lwBC[c]||{rev:0}).rev), backgroundColor: colors.map(c=>c+'70'),     borderRadius:3 },
+        { label:'LY', data: chs.map(c=>(lyBC[c]||{rev:0}).rev), backgroundColor: colors.map(c=>c+'33'),     borderRadius:3 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:true, position:'bottom', labels:{ font:{size:11,family:'DM Sans'}, boxWidth:11, padding:10, usePointStyle:true } },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${fmtK(ctx.raw)}` } }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:11,family:'DM Sans'}} },
+        y:{ grid:{color:'#f0f0f0'}, ticks:{font:{size:11,family:'DM Mono'}, callback:v=>fmtK(v)} }
+      }
+    }
+  };
+  if (charts.bar) charts.bar.destroy();
+  charts.bar = new Chart(document.getElementById('barChart'), cfg);
+}
+
+// ── DONUT ─────────────────────────────────────────────────────────────────
+function renderDonut(twBC) {
+  const chs = CH_ORDER.filter(c => activeCh.has(c) && twBC[c] && twBC[c].rev > 0);
+  const cfg = {
+    type: 'doughnut',
+    data: {
+      labels: chs.map(c=>CH_SHORT[c]),
+      datasets:[{ data: chs.map(c=>twBC[c].rev), backgroundColor: chs.map(c=>CH_COLORS[c]), borderWidth:2, borderColor:'#fff' }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'63%',
+      plugins:{
+        legend:{ display:true, position:'bottom', labels:{ font:{size:10,family:'DM Sans'}, boxWidth:10, padding:7, usePointStyle:true } },
+        tooltip:{ callbacks:{
+          label: ctx => {
+            const tot = ctx.dataset.data.reduce((a,b)=>a+b,0);
+            const p = tot > 0 ? (ctx.raw/tot*100).toFixed(1) : 0;
+            return ` ${ctx.label}: ${fmtK(ctx.raw)} (${p}%)`;
+          }
+        }}
+      }
+    }
+  };
+  if (charts.donut) charts.donut.destroy();
+  charts.donut = new Chart(document.getElementById('donutChart'), cfg);
+}
+
+// ── SCORECARD ─────────────────────────────────────────────────────────────
+function renderScorecard(twBC, lwBC, lyBC, ytdCYBC, ytdLYBC) {
+  const chs = CH_ORDER.filter(c => activeCh.has(c));
+
+  function dCell(p) {
+    const style = p.cls==='pos'?'color:#16a34a':p.cls==='neg'?'color:#dc2626':'color:#9ca3af';
+    return `<td style="${style};font-weight:500">${p.s}</td>`;
+  }
+
+  let twTot={rev:0,ord:0,gm:0}, lwTot={rev:0,ord:0}, lyTot={rev:0}, ytdCYTot={rev:0}, ytdLYTot={rev:0};
+
+  const rows = chs.map(ch => {
+    const tw = twBC[ch]||{rev:0,ord:0,gm:0};
+    const lw = lwBC[ch]||{rev:0,ord:0,gm:0};
+    const ly = lyBC[ch]||{rev:0,ord:0,gm:0};
+    const cy = ytdCYBC[ch]||{rev:0};
+    const yl = ytdLYBC[ch]||{rev:0};
+    twTot.rev+=tw.rev; twTot.ord+=tw.ord; twTot.gm+=tw.gm;
+    lwTot.rev+=lw.rev; lwTot.ord+=lw.ord;
+    lyTot.rev+=ly.rev;
+    ytdCYTot.rev+=cy.rev; ytdLYTot.rev+=yl.rev;
+    const aov = tw.ord>0 ? tw.rev/tw.ord : 0;
+    return `<tr>
+      <td><div class="ch-pill"><div class="dot" style="background:${CH_COLORS[ch]}"></div>${CH_SHORT[ch]}</div></td>
+      <td>${fmtK(tw.rev)}</td><td>${fmtK(lw.rev)}</td><td>${fmtK(ly.rev)}</td>
+      ${dCell(pct(tw.rev,lw.rev))}${dCell(pct(tw.rev,ly.rev))}
+      <td>${fmtK(cy.rev)}</td><td>${fmtK(yl.rev)}</td>
+      ${dCell(pct(cy.rev,yl.rev))}
+      <td>${tw.ord}</td><td>${lw.ord}</td><td>${fmtK(aov)}</td>
+    </tr>`;
+  });
+
+  const totAOV = twTot.ord>0 ? twTot.rev/twTot.ord : 0;
+  const totRow = `<tr>
+    <td><strong>TOTAL</strong></td>
+    <td>${fmtK(twTot.rev)}</td><td>${fmtK(lwTot.rev)}</td><td>${fmtK(lyTot.rev)}</td>
+    ${dCell(pct(twTot.rev,lwTot.rev))}${dCell(pct(twTot.rev,lyTot.rev))}
+    <td>${fmtK(ytdCYTot.rev)}</td><td>${fmtK(ytdLYTot.rev)}</td>
+    ${dCell(pct(ytdCYTot.rev,ytdLYTot.rev))}
+    <td>${twTot.ord}</td><td>${lwTot.ord}</td><td>${fmtK(totAOV)}</td>
+  </tr>`;
+
+  document.getElementById('scBody').innerHTML = rows.join('') + totRow;
+}
+
+// ── 12-WEEK TREND ─────────────────────────────────────────────────────────
+function renderTrend(twFY, lyFY, twWk) {
+  const start = Math.max(1, twWk - 11);
+  const wks = [];
+  for (let w = start; w <= twWk; w++) wks.push(w);
+
+  const cyVals = wks.map(w => agg(rowsWeek(twFY, w)).rev);
+  const lyVals = wks.map(w => agg(rowsWeek(lyFY, w)).rev);
+  const barColors = wks.map(w => w === twWk ? '#2d6a4f' : '#b7d4c3');
+
+  const cfg = {
+    type: 'bar',
+    data: {
+      labels: wks.map(w => `W${w}`),
+      datasets: [
+        {
+          label: `FY ${twFY}`,
+          data: cyVals,
+          backgroundColor: barColors,
+          borderRadius: 3, borderSkipped: false, order: 2
+        },
+        {
+          label: `FY ${lyFY}`,
+          data: lyVals,
+          type: 'line',
+          borderColor: '#94a3b8',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#94a3b8',
+          tension: 0.3, order: 1
+        }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:true, position:'bottom', labels:{ font:{size:11,family:'DM Sans'}, boxWidth:11, padding:10, usePointStyle:true } },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${fmtK(ctx.raw)}` } }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:11,family:'DM Sans'}} },
+        y:{ grid:{color:'#f0f0f0'}, ticks:{font:{size:11,family:'DM Mono'}, callback:v=>fmtK(v)} }
+      }
+    }
+  };
+  if (charts.trend) charts.trend.destroy();
+  charts.trend = new Chart(document.getElementById('trendChart'), cfg);
+}
+
+// ── YTD CHARTS ────────────────────────────────────────────────────────────
+function renderYTD(ytdCYBC, ytdLYBC) {
+  const chs = CH_ORDER.filter(c => activeCh.has(c));
+  const labels = chs.map(c => CH_SHORT[c]);
+  const colors = chs.map(c => CH_COLORS[c]);
+
+  function barCfg(cyVals, lyVals) {
+    return {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          { label:'CY YTD', data:cyVals, backgroundColor:colors,                borderRadius:3 },
+          { label:'LY YTD', data:lyVals, backgroundColor:colors.map(c=>c+'55'), borderRadius:3 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ display:true, position:'bottom', labels:{ font:{size:11,family:'DM Sans'}, boxWidth:11, padding:8, usePointStyle:true } },
+          tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${fmtK(ctx.raw)}` } }
+        },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:11,family:'DM Sans'}} },
+          y:{ grid:{color:'#f0f0f0'}, ticks:{font:{size:11,family:'DM Mono'}, callback:v=>fmtK(v)} }
+        }
+      }
+    };
+  }
+
+  const cyRev = chs.map(c=>(ytdCYBC[c]||{rev:0}).rev);
+  const lyRev = chs.map(c=>(ytdLYBC[c]||{rev:0}).rev);
+  const cyGM  = chs.map(c=>(ytdCYBC[c]||{gm:0}).gm);
+  const lyGM  = chs.map(c=>(ytdLYBC[c]||{gm:0}).gm);
+
+  if (charts.ytdRev) charts.ytdRev.destroy();
+  charts.ytdRev = new Chart(document.getElementById('ytdRevChart'), barCfg(cyRev, lyRev));
+
+  if (charts.ytdGM) charts.ytdGM.destroy();
+  charts.ytdGM = new Chart(document.getElementById('ytdGMChart'), barCfg(cyGM, lyGM));
+}
+</script>
+</body>
+</html>
