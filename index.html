@@ -1,8 +1,8 @@
 <script>
   const pwd = sessionStorage.getItem("kanel_auth");
-  if (pwd !== "yourpassword") {
+  if (pwd !== "Kanel2026!") {
     const input = prompt("Password:");
-    if (input === "yourpassword") {
+    if (input === "Kanel2026!") {
       sessionStorage.setItem("kanel_auth", input);
     } else {
       document.body.innerHTML = "<p>Access denied.</p>";
