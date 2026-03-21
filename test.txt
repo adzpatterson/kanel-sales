@@ -1,0 +1,1 @@
+Worker connection test - OK
