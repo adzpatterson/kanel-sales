@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanel Weekly Sales Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --black:#111111; --black-mid:#2C2C2C;
+  --dill:#00BC7E; --dill-bg:#E6FAF4;
+  --maple:#C21625; --maple-bg:#FAEAEB;
+  --louisiana:#00A3AD; --louisiana-bg:#E6F5F6;
+  --taco:#F7B562; --taco-bg:#FEF6E9;
+  --tuscan:#C4C9A8;
+  --bg:#F5F5F3; --surface:#FFFFFF; --surface2:#F0EFEC;
+  --border:#E2E0DB; --text:#111111; --text-mid:#555550; --text-light:#999990;
+  --sidebar-w:220px; --header-h:62px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.app{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;}
+.sidebar-logo{padding:20px 18px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.sidebar-logo img{width:42px;height:42px;object-fit:contain;border-radius:6px;}
+.sidebar-logo-text .brand{font-size:13px;font-weight:700;color:var(--black);letter-spacing:2px;text-transform:uppercase;}
+.sidebar-logo-text .sub{font-size:9px;color:var(--text-light);letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+.sidebar-nav{padding:18px 16px;flex:1;}
+.nav-label{font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;display:block;}
+.week-select-wrap{position:relative;margin-bottom:18px;}
+.week-select{width:100%;padding:9px 28px 9px 12px;border:1.5px solid var(--dill);background:rgba(0,188,126,0.07);border-radius:5px;font-size:12px;font-weight:700;color:#008C5E;font-family:'Barlow',sans-serif;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2300BC7E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.week-select:focus{outline:none;}
+.week-select option{background:#fff;color:#111;}
+.nav-divider{height:1px;background:var(--border);margin:16px 0;}
+.channel-legend{display:flex;flex-direction:column;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:8px;}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.legend-label{font-size:11px;font-weight:600;color:var(--text-mid);}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);}
+.sample-badge{background:var(--taco-bg);border:1px solid var(--taco);border-radius:4px;padding:6px 10px;font-size:10px;font-weight:700;color:#9A6A00;text-align:center;letter-spacing:0.3px;}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+
+/* HEADER */
+.header{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:90;}
+.header-left{display:flex;align-items:center;gap:14px;}
+.header-title{font-size:18px;font-weight:800;color:var(--black);letter-spacing:-0.3px;}
+.header-week-tag{background:var(--black);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:3px;letter-spacing:0.5px;}
+.header-dates{font-size:11px;color:var(--text-light);font-weight:500;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.fy-badge{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--text-mid);}
+
+/* CONTENT */
+.content{padding:24px 28px;}
+
+/* WEEK SUMMARY STRIP */
+.week-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.strip-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;position:relative;overflow:hidden;}
+.strip-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.strip-card.rev::before{background:var(--black);}
+.strip-card.mar::before{background:var(--dill);}
+.strip-card.trx::before{background:var(--louisiana);}
+.strip-card.asp::before{background:var(--taco);}
+.strip-lbl{font-size:9px;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.strip-val{font-size:26px;font-weight:800;color:var(--black);letter-spacing:-0.5px;line-height:1;}
+.strip-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.delta{font-size:11px;font-weight:700;padding:2px 7px;border-radius:3px;}
+.delta.up{background:var(--dill-bg);color:#008C5E;}
+.delta.down{background:var(--maple-bg);color:var(--maple);}
+.delta.flat{background:var(--surface2);color:var(--text-light);}
+.strip-vs{font-size:10px;color:var(--text-light);font-weight:500;}
+
+/* CHANNEL TABLE */
+.section-title{font-size:11px;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;}
+.table-hdr{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:10px;}
+.table-hdr-title{font-size:13px;font-weight:800;color:var(--black);}
+.table-hdr-sub{font-size:10px;color:var(--text-light);font-weight:500;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--surface2);}
+th{padding:8px 14px;font-size:9px;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:1px solid var(--border);}
+th.num{text-align:right;}
+td{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-mid);border-bottom:1px solid var(--border);}
+td.num{text-align:right;font-weight:600;}
+td.fw7{font-weight:700;color:var(--black);}
+tr:last-child td{border-bottom:none;}
+tr.total-row td{background:var(--surface2);font-weight:800;color:var(--black);border-top:2px solid var(--border);}
+tr.wholesale-combined td{background:#FAFAF8;font-style:italic;color:var(--text-mid);}
+.ch-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;flex-shrink:0;}
+.comp-pos{color:#008C5E;font-weight:700;}
+.comp-neg{color:var(--maple);font-weight:700;}
+.comp-na{color:var(--text-light);}
+.mbar-wrap{display:flex;align-items:center;gap:6px;}
+.mbar{height:5px;border-radius:3px;min-width:3px;}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
+.chart-title{font-size:12px;font-weight:800;color:var(--black);margin-bottom:2px;}
+.chart-sub{font-size:10px;color:var(--text-light);font-weight:500;margin-bottom:14px;}
+
+/* YTD SECTION */
+.ytd-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.ytd-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
+.ytd-title{font-size:11px;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px;}
+.ytd-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+.ytd-row:last-child{border-bottom:none;}
+.ytd-ch{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text-mid);}
+.ytd-vals{display:flex;align-items:center;gap:12px;}
+.ytd-cy{font-size:13px;font-weight:800;color:var(--black);}
+.ytd-py{font-size:11px;color:var(--text-light);}
+
+/* TREND CHART */
+.trend-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div style="width:42px;height:42px;background:var(--black);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+      <span style="color:#fff;font-size:16px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">K.</span>
+    </div>
+    <div class="sidebar-logo-text">
+      <div class="brand">Kanel</div>
+      <div class="sub">Weekly Sales</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <span class="nav-label">Select Week</span>
+    <div class="week-select-wrap">
+      <select class="week-select" id="week-select" onchange="applyWeek()"></select>
+    </div>
+    <div class="nav-divider"></div>
+    <span class="nav-label">Channels</span>
+    <div class="channel-legend" id="channel-legend"></div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sample-badge">⚠ Sample Data</div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="header">
+    <div class="header-left">
+      <div class="header-title">Weekly Report</div>
+      <div class="header-week-tag" id="hdr-week-tag">Week #—</div>
+      <div class="header-dates" id="hdr-dates">— to —</div>
+    </div>
+    <div class="header-right">
+      <div class="fy-badge" id="hdr-fy">FY —</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- KPI STRIP -->
+    <div class="week-strip">
+      <div class="strip-card rev">
+        <div class="strip-lbl">TW Revenue</div>
+        <div class="strip-val" id="kpi-rev">—</div>
+        <div class="strip-bottom">
+          <span class="delta flat" id="kpi-rev-lw-d">—</span>
+          <span class="strip-vs" id="kpi-rev-lw-vs">vs LW —</span>
+          <span class="delta flat" id="kpi-rev-ly-d">—</span>
+          <span class="strip-vs" id="kpi-rev-ly-vs">vs LY —</span>
+        </div>
+      </div>
+      <div class="strip-card mar">
+        <div class="strip-lbl">TW Gross Margin</div>
+        <div class="strip-val" id="kpi-mar">—</div>
+        <div class="strip-bottom">
+          <span class="delta flat" id="kpi-mar-d">—</span>
+          <span class="strip-vs" id="kpi-mar-vs">vs LW —</span>
+          <span class="strip-vs" id="kpi-mar-pct">—% margin</span>
+        </div>
+      </div>
+      <div class="strip-card trx">
+        <div class="strip-lbl">TW Transactions</div>
+        <div class="strip-val" id="kpi-trx">—</div>
+        <div class="strip-bottom">
+          <span class="delta flat" id="kpi-trx-d">—</span>
+          <span class="strip-vs" id="kpi-trx-vs">vs LW —</span>
+          <span class="delta flat" id="kpi-trx-ly-d">—</span>
+          <span class="strip-vs" id="kpi-trx-ly-vs">vs LY —</span>
+        </div>
+      </div>
+      <div class="strip-card asp">
+        <div class="strip-lbl">$/Transaction</div>
+        <div class="strip-val" id="kpi-asp">—</div>
+        <div class="strip-bottom">
+          <span class="delta flat" id="kpi-asp-d">—</span>
+          <span class="strip-vs" id="kpi-asp-vs">vs LW —</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">TW vs LW vs LY — Revenue by Channel</div>
+        <div class="chart-sub" id="ch-bar-sub">—</div>
+        <div style="position:relative;height:220px;"><canvas id="chart-ch-bar"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Channel Mix</div>
+        <div class="chart-sub" id="ch-pie-sub">TW Revenue Share</div>
+        <div style="position:relative;height:220px;"><canvas id="chart-ch-pie"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHANNEL SCORECARD TABLE -->
+    <div class="table-card">
+      <div class="table-hdr">
+        <div class="table-hdr-title">Channel Scorecard</div>
+        <div class="table-hdr-sub" id="scorecard-sub">TW · LW · LY · YTD</div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Channel</th>
+          <th class="num">TW Sales</th>
+          <th class="num">LW Sales</th>
+          <th class="num">LY Sales</th>
+          <th class="num">TW vs LW</th>
+          <th class="num">TW vs LY</th>
+          <th class="num">YTD CY</th>
+          <th class="num">YTD LY</th>
+          <th class="num">YTD Comp %</th>
+          <th class="num">TW Trans</th>
+          <th class="num">LW Trans</th>
+          <th class="num">TW $/Trx</th>
+        </tr></thead>
+        <tbody id="scorecard-body"></tbody>
+      </table>
+    </div>
+
+    <!-- TREND CHART -->
+    <div class="trend-card">
+      <div class="chart-title">12-Week Revenue Trend — TW Highlighted</div>
+      <div class="chart-sub" id="trend-sub">Last 12 weeks · CY vs LY</div>
+      <div style="position:relative;height:200px;"><canvas id="chart-trend"></canvas></div>
+    </div>
+
+    <!-- YTD SECTION -->
+    <div class="ytd-grid">
+      <div class="ytd-card">
+        <div class="ytd-title">YTD Revenue by Channel</div>
+        <div id="ytd-rev-rows"></div>
+      </div>
+      <div class="ytd-card">
+        <div class="ytd-title">YTD Margin by Channel</div>
+        <div id="ytd-mar-rows"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const CHANNEL_COLORS = {
+  'Corporate':                '#111111',
+  'Ecommerce':                '#C21625',
+  'Grocery':                  '#00BC7E',
+  'POS':                      '#00A3AD',
+  'Wholesale: DYA':           '#F7B562',
+  'Wholesale: House Account': '#C4C9A8'
+};
+const CHANNELS = ['Corporate','Ecommerce','Grocery','POS','Wholesale: DYA','Wholesale: House Account'];
+const CHARTS = {};
+const fmtK = n => { const a=Math.abs(n),s=n<0?'-':''; return a>=1e6?s+'$'+(a/1e6).toFixed(2)+'M':a>=1e3?s+'$'+(a/1e3).toFixed(1)+'K':s+'$'+Math.round(a).toLocaleString(); };
+const fmtPct = n => (n>=0?'+':'')+n.toFixed(1)+'%';
+const fmtNum = n => Math.round(n).toLocaleString('en-CA');
+const gridClr = '#E2E0DB';
+const tickSty = {font:{family:'Barlow',size:10,weight:'600'},color:'#999990'};
+
+const RAW = [{"fy":"2024/25","week":1,"ws":"Jul 28/24","we":"Aug 03/24","ch":"Corporate","rev":3083.54,"mar":1766.5,"trx":2},{"fy":"2024/25","week":1,"ws":"Jul 28/24","we":"Aug 03/24","ch":"Ecommerce","rev":8264.71,"mar":5832.64,"trx":116},{"fy":"2024/25","week":1,"ws":"Jul 28/24","we":"Aug 03/24","ch":"Grocery","rev":1966.52,"mar":955.01,"trx":8},{"fy":"2024/25","week":1,"ws":"Jul 28/24","we":"Aug 03/24","ch":"POS","rev":522.16,"mar":349.06,"trx":8},{"fy":"2024/25","week":1,"ws":"Jul 28/24","we":"Aug 03/24","ch":"Wholesale: DYA","rev":6835.85,"mar":3123.1,"trx":10},{"fy":"2024/25","week":1,"ws":"Jul 28/24","we":"Aug 03/24","ch":"Wholesale: House Account","rev":2929.34,"mar":1399.16,"trx":5},{"fy":"2024/25","week":2,"ws":"Aug 04/24","we":"Aug 10/24","ch":"Corporate","rev":3558.7,"mar":2032.18,"trx":3},{"fy":"2024/25","week":2,"ws":"Aug 04/24","we":"Aug 10/24","ch":"Ecommerce","rev":11571.95,"mar":7667.8,"trx":117},{"fy":"2024/25","week":2,"ws":"Aug 04/24","we":"Aug 10/24","ch":"Grocery","rev":2145.41,"mar":1086.45,"trx":7},{"fy":"2024/25","week":2,"ws":"Aug 04/24","we":"Aug 10/24","ch":"POS","rev":581.78,"mar":429.89,"trx":9},{"fy":"2024/25","week":2,"ws":"Aug 04/24","we":"Aug 10/24","ch":"Wholesale: DYA","rev":11663.92,"mar":5804.47,"trx":16},{"fy":"2024/25","week":2,"ws":"Aug 04/24","we":"Aug 10/24","ch":"Wholesale: House Account","rev":3841.54,"mar":1883.44,"trx":6},{"fy":"2024/25","week":3,"ws":"Aug 11/24","we":"Aug 17/24","ch":"Corporate","rev":3593.21,"mar":2270.04,"trx":3},{"fy":"2024/25","week":3,"ws":"Aug 11/24","we":"Aug 17/24","ch":"Ecommerce","rev":10854.47,"mar":7622.63,"trx":101},{"fy":"2024/25","week":3,"ws":"Aug 11/24","we":"Aug 17/24","ch":"Grocery","rev":1436.52,"mar":721.82,"trx":5},{"fy":"2024/25","week":3,"ws":"Aug 11/24","we":"Aug 17/24","ch":"POS","rev":640.57,"mar":419.77,"trx":8},{"fy":"2024/25","week":3,"ws":"Aug 11/24","we":"Aug 17/24","ch":"Wholesale: DYA","rev":10691.83,"mar":5021.09,"trx":13},{"fy":"2024/25","week":3,"ws":"Aug 11/24","we":"Aug 17/24","ch":"Wholesale: House Account","rev":2522.03,"mar":1214.0,"trx":5},{"fy":"2024/25","week":4,"ws":"Aug 18/24","we":"Aug 24/24","ch":"Corporate","rev":3279.81,"mar":2068.99,"trx":2},{"fy":"2024/25","week":4,"ws":"Aug 18/24","we":"Aug 24/24","ch":"Ecommerce","rev":11756.01,"mar":7563.56,"trx":139},{"fy":"2024/25","week":4,"ws":"Aug 18/24","we":"Aug 24/24","ch":"Grocery","rev":2176.82,"mar":1157.3,"trx":10},{"fy":"2024/25","week":4,"ws":"Aug 18/24","we":"Aug 24/24","ch":"POS","rev":835.75,"mar":617.12,"trx":15},{"fy":"2024/25","week":4,"ws":"Aug 18/24","we":"Aug 24/24","ch":"Wholesale: DYA","rev":8386.2,"mar":3724.02,"trx":10},{"fy":"2024/25","week":4,"ws":"Aug 18/24","we":"Aug 24/24","ch":"Wholesale: House Account","rev":2622.66,"mar":1250.69,"trx":5},{"fy":"2024/25","week":5,"ws":"Aug 25/24","we":"Aug 31/24","ch":"Corporate","rev":3674.36,"mar":2210.55,"trx":3},{"fy":"2024/25","week":5,"ws":"Aug 25/24","we":"Aug 31/24","ch":"Ecommerce","rev":9775.05,"mar":7087.92,"trx":121},{"fy":"2024/25","week":5,"ws":"Aug 25/24","we":"Aug 31/24","ch":"Grocery","rev":1472.46,"mar":734.64,"trx":7},{"fy":"2024/25","week":5,"ws":"Aug 25/24","we":"Aug 31/24","ch":"POS","rev":653.5,"mar":463.64,"trx":12},{"fy":"2024/25","week":5,"ws":"Aug 25/24","we":"Aug 31/24","ch":"Wholesale: DYA","rev":9352.1,"mar":4287.41,"trx":16},{"fy":"2024/25","week":5,"ws":"Aug 25/24","we":"Aug 31/24","ch":"Wholesale: House Account","rev":3040.46,"mar":1420.72,"trx":3},{"fy":"2024/25","week":6,"ws":"Sep 01/24","we":"Sep 07/24","ch":"Corporate","rev":2610.53,"mar":1651.53,"trx":2},{"fy":"2024/25","week":6,"ws":"Sep 01/24","we":"Sep 07/24","ch":"Ecommerce","rev":11036.26,"mar":6980.56,"trx":130},{"fy":"2024/25","week":6,"ws":"Sep 01/24","we":"Sep 07/24","ch":"Grocery","rev":2425.81,"mar":1267.3,"trx":14},{"fy":"2024/25","week":6,"ws":"Sep 01/24","we":"Sep 07/24","ch":"POS","rev":1013.17,"mar":653.78,"trx":17},{"fy":"2024/25","week":6,"ws":"Sep 01/24","we":"Sep 07/24","ch":"Wholesale: DYA","rev":12169.78,"mar":5876.05,"trx":14},{"fy":"2024/25","week":6,"ws":"Sep 01/24","we":"Sep 07/24","ch":"Wholesale: House Account","rev":3630.65,"mar":1702.5,"trx":5},{"fy":"2024/25","week":7,"ws":"Sep 08/24","we":"Sep 14/24","ch":"Corporate","rev":3271.15,"mar":2175.38,"trx":3},{"fy":"2024/25","week":7,"ws":"Sep 08/24","we":"Sep 14/24","ch":"Ecommerce","rev":9988.37,"mar":6792.73,"trx":103},{"fy":"2024/25","week":7,"ws":"Sep 08/24","we":"Sep 14/24","ch":"Grocery","rev":2335.64,"mar":1286.53,"trx":9},{"fy":"2024/25","week":7,"ws":"Sep 08/24","we":"Sep 14/24","ch":"POS","rev":906.7,"mar":645.76,"trx":11},{"fy":"2024/25","week":7,"ws":"Sep 08/24","we":"Sep 14/24","ch":"Wholesale: DYA","rev":12678.82,"mar":6124.18,"trx":20},{"fy":"2024/25","week":7,"ws":"Sep 08/24","we":"Sep 14/24","ch":"Wholesale: House Account","rev":3418.28,"mar":1572.57,"trx":5},{"fy":"2024/25","week":8,"ws":"Sep 15/24","we":"Sep 21/24","ch":"Corporate","rev":2437.4,"mar":1614.94,"trx":2},{"fy":"2024/25","week":8,"ws":"Sep 15/24","we":"Sep 21/24","ch":"Ecommerce","rev":13738.99,"mar":9054.78,"trx":128},{"fy":"2024/25","week":8,"ws":"Sep 15/24","we":"Sep 21/24","ch":"Grocery","rev":2298.25,"mar":1280.55,"trx":8},{"fy":"2024/25","week":8,"ws":"Sep 15/24","we":"Sep 21/24","ch":"POS","rev":833.28,"mar":543.09,"trx":14},{"fy":"2024/25","week":8,"ws":"Sep 15/24","we":"Sep 21/24","ch":"Wholesale: DYA","rev":12699.76,"mar":5733.44,"trx":17},{"fy":"2024/25","week":8,"ws":"Sep 15/24","we":"Sep 21/24","ch":"Wholesale: House Account","rev":3455.62,"mar":1662.86,"trx":7},{"fy":"2024/25","week":9,"ws":"Sep 22/24","we":"Sep 28/24","ch":"Corporate","rev":3212.42,"mar":1899.86,"trx":2},{"fy":"2024/25","week":9,"ws":"Sep 22/24","we":"Sep 28/24","ch":"Ecommerce","rev":13067.55,"mar":8461.05,"trx":148},{"fy":"2024/25","week":9,"ws":"Sep 22/24","we":"Sep 28/24","ch":"Grocery","rev":2424.76,"mar":1291.11,"trx":10},{"fy":"2024/25","week":9,"ws":"Sep 22/24","we":"Sep 28/24","ch":"POS","rev":848.44,"mar":557.89,"trx":11},{"fy":"2024/25","week":9,"ws":"Sep 22/24","we":"Sep 28/24","ch":"Wholesale: DYA","rev":10004.94,"mar":4870.23,"trx":11},{"fy":"2024/25","week":9,"ws":"Sep 22/24","we":"Sep 28/24","ch":"Wholesale: House Account","rev":2822.82,"mar":1314.53,"trx":5},{"fy":"2024/25","week":10,"ws":"Sep 29/24","we":"Oct 05/24","ch":"Corporate","rev":2839.57,"mar":1874.73,"trx":2},{"fy":"2024/25","week":10,"ws":"Sep 29/24","we":"Oct 05/24","ch":"Ecommerce","rev":8717.66,"mar":5679.51,"trx":122},{"fy":"2024/25","week":10,"ws":"Sep 29/24","we":"Oct 05/24","ch":"Grocery","rev":1581.38,"mar":773.94,"trx":9},{"fy":"2024/25","week":10,"ws":"Sep 29/24","we":"Oct 05/24","ch":"POS","rev":874.1,"mar":609.19,"trx":15},{"fy":"2024/25","week":10,"ws":"Sep 29/24","we":"Oct 05/24","ch":"Wholesale: DYA","rev":12962.23,"mar":5913.67,"trx":13},{"fy":"2024/25","week":10,"ws":"Sep 29/24","we":"Oct 05/24","ch":"Wholesale: House Account","rev":3227.62,"mar":1594.08,"trx":5},{"fy":"2024/25","week":11,"ws":"Oct 06/24","we":"Oct 12/24","ch":"Corporate","rev":4179.81,"mar":2663.37,"trx":3},{"fy":"2024/25","week":11,"ws":"Oct 06/24","we":"Oct 12/24","ch":"Ecommerce","rev":9789.51,"mar":6553.15,"trx":113},{"fy":"2024/25","week":11,"ws":"Oct 06/24","we":"Oct 12/24","ch":"Grocery","rev":2508.67,"mar":1252.05,"trx":9},{"fy":"2024/25","week":11,"ws":"Oct 06/24","we":"Oct 12/24","ch":"POS","rev":896.87,"mar":619.96,"trx":12},{"fy":"2024/25","week":11,"ws":"Oct 06/24","we":"Oct 12/24","ch":"Wholesale: DYA","rev":10393.66,"mar":5326.82,"trx":13},{"fy":"2024/25","week":11,"ws":"Oct 06/24","we":"Oct 12/24","ch":"Wholesale: House Account","rev":4459.17,"mar":2247.54,"trx":5},{"fy":"2024/25","week":12,"ws":"Oct 13/24","we":"Oct 19/24","ch":"Corporate","rev":4750.48,"mar":3103.65,"trx":4},{"fy":"2024/25","week":12,"ws":"Oct 13/24","we":"Oct 19/24","ch":"Ecommerce","rev":15800.42,"mar":11343.72,"trx":161},{"fy":"2024/25","week":12,"ws":"Oct 13/24","we":"Oct 19/24","ch":"Grocery","rev":2061.94,"mar":1023.1,"trx":9},{"fy":"2024/25","week":12,"ws":"Oct 13/24","we":"Oct 19/24","ch":"POS","rev":690.96,"mar":474.31,"trx":13},{"fy":"2024/25","week":12,"ws":"Oct 13/24","we":"Oct 19/24","ch":"Wholesale: DYA","rev":10500.36,"mar":5269.26,"trx":14},{"fy":"2024/25","week":12,"ws":"Oct 13/24","we":"Oct 19/24","ch":"Wholesale: House Account","rev":3533.39,"mar":1895.97,"trx":7},{"fy":"2024/25","week":13,"ws":"Oct 20/24","we":"Oct 26/24","ch":"Corporate","rev":3813.78,"mar":2447.17,"trx":2},{"fy":"2024/25","week":13,"ws":"Oct 20/24","we":"Oct 26/24","ch":"Ecommerce","rev":11229.1,"mar":8208.42,"trx":150},{"fy":"2024/25","week":13,"ws":"Oct 20/24","we":"Oct 26/24","ch":"Grocery","rev":2129.13,"mar":1151.07,"trx":7},{"fy":"2024/25","week":13,"ws":"Oct 20/24","we":"Oct 26/24","ch":"POS","rev":968.45,"mar":678.22,"trx":18},{"fy":"2024/25","week":13,"ws":"Oct 20/24","we":"Oct 26/24","ch":"Wholesale: DYA","rev":9753.51,"mar":5026.84,"trx":10},{"fy":"2024/25","week":13,"ws":"Oct 20/24","we":"Oct 26/24","ch":"Wholesale: House Account","rev":3032.46,"mar":1539.29,"trx":5},{"fy":"2024/25","week":14,"ws":"Oct 27/24","we":"Nov 02/24","ch":"Corporate","rev":3136.75,"mar":1826.51,"trx":2},{"fy":"2024/25","week":14,"ws":"Oct 27/24","we":"Nov 02/24","ch":"Ecommerce","rev":10862.52,"mar":7498.22,"trx":148},{"fy":"2024/25","week":14,"ws":"Oct 27/24","we":"Nov 02/24","ch":"Grocery","rev":1983.04,"mar":1044.99,"trx":9},{"fy":"2024/25","week":14,"ws":"Oct 27/24","we":"Nov 02/24","ch":"POS","rev":1153.52,"mar":769.26,"trx":20},{"fy":"2024/25","week":14,"ws":"Oct 27/24","we":"Nov 02/24","ch":"Wholesale: DYA","rev":10316.59,"mar":4869.39,"trx":15},{"fy":"2024/25","week":14,"ws":"Oct 27/24","we":"Nov 02/24","ch":"Wholesale: House Account","rev":3273.59,"mar":1588.65,"trx":6},{"fy":"2024/25","week":15,"ws":"Nov 03/24","we":"Nov 09/24","ch":"Corporate","rev":3555.0,"mar":2189.39,"trx":3},{"fy":"2024/25","week":15,"ws":"Nov 03/24","we":"Nov 09/24","ch":"Ecommerce","rev":20753.93,"mar":13149.08,"trx":219},{"fy":"2024/25","week":15,"ws":"Nov 03/24","we":"Nov 09/24","ch":"Grocery","rev":2290.98,"mar":1273.89,"trx":13},{"fy":"2024/25","week":15,"ws":"Nov 03/24","we":"Nov 09/24","ch":"POS","rev":1430.87,"mar":980.7,"trx":17},{"fy":"2024/25","week":15,"ws":"Nov 03/24","we":"Nov 09/24","ch":"Wholesale: DYA","rev":18378.63,"mar":9109.03,"trx":26},{"fy":"2024/25","week":15,"ws":"Nov 03/24","we":"Nov 09/24","ch":"Wholesale: House Account","rev":6013.68,"mar":3080.92,"trx":7},{"fy":"2024/25","week":16,"ws":"Nov 10/24","we":"Nov 16/24","ch":"Corporate","rev":5556.38,"mar":3334.37,"trx":4},{"fy":"2024/25","week":16,"ws":"Nov 10/24","we":"Nov 16/24","ch":"Ecommerce","rev":20225.71,"mar":12948.72,"trx":198},{"fy":"2024/25","week":16,"ws":"Nov 10/24","we":"Nov 16/24","ch":"Grocery","rev":2051.84,"mar":1076.04,"trx":8},{"fy":"2024/25","week":16,"ws":"Nov 10/24","we":"Nov 16/24","ch":"POS","rev":1246.45,"mar":902.89,"trx":15},{"fy":"2024/25","week":16,"ws":"Nov 10/24","we":"Nov 16/24","ch":"Wholesale: DYA","rev":16618.98,"mar":7675.87,"trx":22},{"fy":"2024/25","week":16,"ws":"Nov 10/24","we":"Nov 16/24","ch":"Wholesale: House Account","rev":5793.54,"mar":3057.18,"trx":7},{"fy":"2024/25","week":17,"ws":"Nov 17/24","we":"Nov 23/24","ch":"Corporate","rev":4498.57,"mar":2689.46,"trx":2},{"fy":"2024/25","week":17,"ws":"Nov 17/24","we":"Nov 23/24","ch":"Ecommerce","rev":18675.14,"mar":12977.69,"trx":204},{"fy":"2024/25","week":17,"ws":"Nov 17/24","we":"Nov 23/24","ch":"Grocery","rev":3010.74,"mar":1578.53,"trx":13},{"fy":"2024/25","week":17,"ws":"Nov 17/24","we":"Nov 23/24","ch":"POS","rev":846.5,"mar":552.28,"trx":16},{"fy":"2024/25","week":17,"ws":"Nov 17/24","we":"Nov 23/24","ch":"Wholesale: DYA","rev":18997.65,"mar":9185.39,"trx":30},{"fy":"2024/25","week":17,"ws":"Nov 17/24","we":"Nov 23/24","ch":"Wholesale: House Account","rev":4925.79,"mar":2324.22,"trx":6},{"fy":"2024/25","week":18,"ws":"Nov 24/24","we":"Nov 30/24","ch":"Corporate","rev":4188.6,"mar":2762.71,"trx":3},{"fy":"2024/25","week":18,"ws":"Nov 24/24","we":"Nov 30/24","ch":"Ecommerce","rev":19502.89,"mar":14108.45,"trx":205},{"fy":"2024/25","week":18,"ws":"Nov 24/24","we":"Nov 30/24","ch":"Grocery","rev":2267.29,"mar":1104.06,"trx":12},{"fy":"2024/25","week":18,"ws":"Nov 24/24","we":"Nov 30/24","ch":"POS","rev":1434.14,"mar":988.86,"trx":23},{"fy":"2024/25","week":18,"ws":"Nov 24/24","we":"Nov 30/24","ch":"Wholesale: DYA","rev":12388.16,"mar":6355.31,"trx":20},{"fy":"2024/25","week":18,"ws":"Nov 24/24","we":"Nov 30/24","ch":"Wholesale: House Account","rev":5984.04,"mar":3140.79,"trx":11},{"fy":"2024/25","week":19,"ws":"Dec 01/24","we":"Dec 07/24","ch":"Corporate","rev":3916.14,"mar":2519.91,"trx":2},{"fy":"2024/25","week":19,"ws":"Dec 01/24","we":"Dec 07/24","ch":"Ecommerce","rev":23029.42,"mar":16417.29,"trx":357},{"fy":"2024/25","week":19,"ws":"Dec 01/24","we":"Dec 07/24","ch":"Grocery","rev":3560.97,"mar":1782.62,"trx":19},{"fy":"2024/25","week":19,"ws":"Dec 01/24","we":"Dec 07/24","ch":"POS","rev":1043.02,"mar":773.59,"trx":19},{"fy":"2024/25","week":19,"ws":"Dec 01/24","we":"Dec 07/24","ch":"Wholesale: DYA","rev":14842.13,"mar":7485.09,"trx":19},{"fy":"2024/25","week":19,"ws":"Dec 01/24","we":"Dec 07/24","ch":"Wholesale: House Account","rev":4777.55,"mar":2501.66,"trx":6},{"fy":"2024/25","week":20,"ws":"Dec 08/24","we":"Dec 14/24","ch":"Corporate","rev":3912.7,"mar":2306.77,"trx":2},{"fy":"2024/25","week":20,"ws":"Dec 08/24","we":"Dec 14/24","ch":"Ecommerce","rev":22327.57,"mar":16316.93,"trx":247},{"fy":"2024/25","week":20,"ws":"Dec 08/24","we":"Dec 14/24","ch":"Grocery","rev":3268.48,"mar":1672.33,"trx":19},{"fy":"2024/25","week":20,"ws":"Dec 08/24","we":"Dec 14/24","ch":"POS","rev":1371.81,"mar":1027.75,"trx":16},{"fy":"2024/25","week":20,"ws":"Dec 08/24","we":"Dec 14/24","ch":"Wholesale: DYA","rev":22381.64,"mar":10190.67,"trx":38},{"fy":"2024/25","week":20,"ws":"Dec 08/24","we":"Dec 14/24","ch":"Wholesale: House Account","rev":4655.51,"mar":2181.91,"trx":7},{"fy":"2024/25","week":21,"ws":"Dec 15/24","we":"Dec 21/24","ch":"Corporate","rev":6078.09,"mar":3656.07,"trx":4},{"fy":"2024/25","week":21,"ws":"Dec 15/24","we":"Dec 21/24","ch":"Ecommerce","rev":18600.63,"mar":12416.09,"trx":248},{"fy":"2024/25","week":21,"ws":"Dec 15/24","we":"Dec 21/24","ch":"Grocery","rev":2600.16,"mar":1397.25,"trx":8},{"fy":"2024/25","week":21,"ws":"Dec 15/24","we":"Dec 21/24","ch":"POS","rev":1670.84,"mar":1176.78,"trx":28},{"fy":"2024/25","week":21,"ws":"Dec 15/24","we":"Dec 21/24","ch":"Wholesale: DYA","rev":20078.86,"mar":9900.97,"trx":25},{"fy":"2024/25","week":21,"ws":"Dec 15/24","we":"Dec 21/24","ch":"Wholesale: House Account","rev":4054.96,"mar":2080.76,"trx":6},{"fy":"2024/25","week":22,"ws":"Dec 22/24","we":"Dec 28/24","ch":"Corporate","rev":4804.35,"mar":3144.56,"trx":3},{"fy":"2024/25","week":22,"ws":"Dec 22/24","we":"Dec 28/24","ch":"Ecommerce","rev":16371.4,"mar":10792.85,"trx":197},{"fy":"2024/25","week":22,"ws":"Dec 22/24","we":"Dec 28/24","ch":"Grocery","rev":2855.35,"mar":1436.24,"trx":10},{"fy":"2024/25","week":22,"ws":"Dec 22/24","we":"Dec 28/24","ch":"POS","rev":1282.9,"mar":961.3,"trx":21},{"fy":"2024/25","week":22,"ws":"Dec 22/24","we":"Dec 28/24","ch":"Wholesale: DYA","rev":21700.28,"mar":10608.65,"trx":25},{"fy":"2024/25","week":22,"ws":"Dec 22/24","we":"Dec 28/24","ch":"Wholesale: House Account","rev":5523.26,"mar":2540.88,"trx":8},{"fy":"2024/25","week":23,"ws":"Dec 29/24","we":"Jan 04/25","ch":"Corporate","rev":5160.62,"mar":3240.53,"trx":4},{"fy":"2024/25","week":23,"ws":"Dec 29/24","we":"Jan 04/25","ch":"Ecommerce","rev":18110.28,"mar":12201.02,"trx":191},{"fy":"2024/25","week":23,"ws":"Dec 29/24","we":"Jan 04/25","ch":"Grocery","rev":2977.67,"mar":1647.78,"trx":16},{"fy":"2024/25","week":23,"ws":"Dec 29/24","we":"Jan 04/25","ch":"POS","rev":1090.32,"mar":712.52,"trx":17},{"fy":"2024/25","week":23,"ws":"Dec 29/24","we":"Jan 04/25","ch":"Wholesale: DYA","rev":18980.04,"mar":8870.18,"trx":30},{"fy":"2024/25","week":23,"ws":"Dec 29/24","we":"Jan 04/25","ch":"Wholesale: House Account","rev":6147.5,"mar":3158.73,"trx":8},{"fy":"2024/25","week":24,"ws":"Jan 05/25","we":"Jan 11/25","ch":"Corporate","rev":2504.1,"mar":1434.41,"trx":1},{"fy":"2024/25","week":24,"ws":"Jan 05/25","we":"Jan 11/25","ch":"Ecommerce","rev":10247.31,"mar":7358.1,"trx":97},{"fy":"2024/25","week":24,"ws":"Jan 05/25","we":"Jan 11/25","ch":"Grocery","rev":1617.84,"mar":858.74,"trx":6},{"fy":"2024/25","week":24,"ws":"Jan 05/25","we":"Jan 11/25","ch":"POS","rev":840.83,"mar":588.05,"trx":11},{"fy":"2024/25","week":24,"ws":"Jan 05/25","we":"Jan 11/25","ch":"Wholesale: DYA","rev":10807.35,"mar":4777.13,"trx":17},{"fy":"2024/25","week":24,"ws":"Jan 05/25","we":"Jan 11/25","ch":"Wholesale: House Account","rev":3490.64,"mar":1635.46,"trx":5},{"fy":"2024/25","week":25,"ws":"Jan 12/25","we":"Jan 18/25","ch":"Corporate","rev":2463.93,"mar":1639.57,"trx":2},{"fy":"2024/25","week":25,"ws":"Jan 12/25","we":"Jan 18/25","ch":"Ecommerce","rev":7723.3,"mar":5041.1,"trx":119},{"fy":"2024/25","week":25,"ws":"Jan 12/25","we":"Jan 18/25","ch":"Grocery","rev":1658.68,"mar":904.11,"trx":8},{"fy":"2024/25","week":25,"ws":"Jan 12/25","we":"Jan 18/25","ch":"POS","rev":966.77,"mar":687.07,"trx":18},{"fy":"2024/25","week":25,"ws":"Jan 12/25","we":"Jan 18/25","ch":"Wholesale: DYA","rev":12141.88,"mar":5933.15,"trx":18},{"fy":"2024/25","week":25,"ws":"Jan 12/25","we":"Jan 18/25","ch":"Wholesale: House Account","rev":3032.26,"mar":1596.32,"trx":5},{"fy":"2024/25","week":26,"ws":"Jan 19/25","we":"Jan 25/25","ch":"Corporate","rev":3710.38,"mar":2390.12,"trx":2},{"fy":"2024/25","week":26,"ws":"Jan 19/25","we":"Jan 25/25","ch":"Ecommerce","rev":8964.6,"mar":5849.4,"trx":124},{"fy":"2024/25","week":26,"ws":"Jan 19/25","we":"Jan 25/25","ch":"Grocery","rev":1959.37,"mar":1022.34,"trx":9},{"fy":"2024/25","week":26,"ws":"Jan 19/25","we":"Jan 25/25","ch":"POS","rev":658.63,"mar":429.87,"trx":9},{"fy":"2024/25","week":26,"ws":"Jan 19/25","we":"Jan 25/25","ch":"Wholesale: DYA","rev":8628.12,"mar":4022.03,"trx":12},{"fy":"2024/25","week":26,"ws":"Jan 19/25","we":"Jan 25/25","ch":"Wholesale: House Account","rev":2399.11,"mar":1147.98,"trx":4},{"fy":"2024/25","week":27,"ws":"Jan 26/25","we":"Feb 01/25","ch":"Corporate","rev":3380.69,"mar":1949.89,"trx":2},{"fy":"2024/25","week":27,"ws":"Jan 26/25","we":"Feb 01/25","ch":"Ecommerce","rev":10648.11,"mar":7143.14,"trx":112},{"fy":"2024/25","week":27,"ws":"Jan 26/25","we":"Feb 01/25","ch":"Grocery","rev":1623.38,"mar":898.84,"trx":8},{"fy":"2024/25","week":27,"ws":"Jan 26/25","we":"Feb 01/25","ch":"POS","rev":840.47,"mar":621.91,"trx":15},{"fy":"2024/25","week":27,"ws":"Jan 26/25","we":"Feb 01/25","ch":"Wholesale: DYA","rev":9244.26,"mar":4086.45,"trx":11},{"fy":"2024/25","week":27,"ws":"Jan 26/25","we":"Feb 01/25","ch":"Wholesale: House Account","rev":3462.01,"mar":1828.9,"trx":7},{"fy":"2024/25","week":28,"ws":"Feb 02/25","we":"Feb 08/25","ch":"Corporate","rev":2723.84,"mar":1755.66,"trx":2},{"fy":"2024/25","week":28,"ws":"Feb 02/25","we":"Feb 08/25","ch":"Ecommerce","rev":10396.75,"mar":6753.67,"trx":110},{"fy":"2024/25","week":28,"ws":"Feb 02/25","we":"Feb 08/25","ch":"Grocery","rev":1547.6,"mar":744.11,"trx":6},{"fy":"2024/25","week":28,"ws":"Feb 02/25","we":"Feb 08/25","ch":"POS","rev":787.09,"mar":542.53,"trx":9},{"fy":"2024/25","week":28,"ws":"Feb 02/25","we":"Feb 08/25","ch":"Wholesale: DYA","rev":9196.62,"mar":4151.37,"trx":13},{"fy":"2024/25","week":28,"ws":"Feb 02/25","we":"Feb 08/25","ch":"Wholesale: House Account","rev":2084.01,"mar":1024.34,"trx":3},{"fy":"2024/25","week":29,"ws":"Feb 09/25","we":"Feb 15/25","ch":"Corporate","rev":2084.23,"mar":1321.74,"trx":1},{"fy":"2024/25","week":29,"ws":"Feb 09/25","we":"Feb 15/25","ch":"Ecommerce","rev":9602.63,"mar":6059.94,"trx":113},{"fy":"2024/25","week":29,"ws":"Feb 09/25","we":"Feb 15/25","ch":"Grocery","rev":1341.8,"mar":678.41,"trx":7},{"fy":"2024/25","week":29,"ws":"Feb 09/25","we":"Feb 15/25","ch":"POS","rev":664.68,"mar":484.04,"trx":12},{"fy":"2024/25","week":29,"ws":"Feb 09/25","we":"Feb 15/25","ch":"Wholesale: DYA","rev":8044.66,"mar":3603.13,"trx":8},{"fy":"2024/25","week":29,"ws":"Feb 09/25","we":"Feb 15/25","ch":"Wholesale: House Account","rev":2920.33,"mar":1576.96,"trx":4},{"fy":"2024/25","week":30,"ws":"Feb 16/25","we":"Feb 22/25","ch":"Corporate","rev":3101.04,"mar":2009.16,"trx":2},{"fy":"2024/25","week":30,"ws":"Feb 16/25","we":"Feb 22/25","ch":"Ecommerce","rev":11243.75,"mar":8195.77,"trx":117},{"fy":"2024/25","week":30,"ws":"Feb 16/25","we":"Feb 22/25","ch":"Grocery","rev":1166.21,"mar":572.7,"trx":4},{"fy":"2024/25","week":30,"ws":"Feb 16/25","we":"Feb 22/25","ch":"POS","rev":783.14,"mar":553.81,"trx":10},{"fy":"2024/25","week":30,"ws":"Feb 16/25","we":"Feb 22/25","ch":"Wholesale: DYA","rev":10439.38,"mar":5224.89,"trx":11},{"fy":"2024/25","week":30,"ws":"Feb 16/25","we":"Feb 22/25","ch":"Wholesale: House Account","rev":3031.03,"mar":1575.63,"trx":4},{"fy":"2024/25","week":31,"ws":"Feb 23/25","we":"Mar 01/25","ch":"Corporate","rev":3377.1,"mar":2249.49,"trx":2},{"fy":"2024/25","week":31,"ws":"Feb 23/25","we":"Mar 01/25","ch":"Ecommerce","rev":7156.56,"mar":4720.04,"trx":101},{"fy":"2024/25","week":31,"ws":"Feb 23/25","we":"Mar 01/25","ch":"Grocery","rev":2027.1,"mar":1036.66,"trx":10},{"fy":"2024/25","week":31,"ws":"Feb 23/25","we":"Mar 01/25","ch":"POS","rev":541.01,"mar":390.26,"trx":9},{"fy":"2024/25","week":31,"ws":"Feb 23/25","we":"Mar 01/25","ch":"Wholesale: DYA","rev":7239.43,"mar":3626.42,"trx":12},{"fy":"2024/25","week":31,"ws":"Feb 23/25","we":"Mar 01/25","ch":"Wholesale: House Account","rev":3019.87,"mar":1418.39,"trx":6},{"fy":"2024/25","week":32,"ws":"Mar 02/25","we":"Mar 08/25","ch":"Corporate","rev":3512.39,"mar":2124.44,"trx":2},{"fy":"2024/25","week":32,"ws":"Mar 02/25","we":"Mar 08/25","ch":"Ecommerce","rev":9626.19,"mar":6552.05,"trx":111},{"fy":"2024/25","week":32,"ws":"Mar 02/25","we":"Mar 08/25","ch":"Grocery","rev":2040.79,"mar":1115.94,"trx":7},{"fy":"2024/25","week":32,"ws":"Mar 02/25","we":"Mar 08/25","ch":"POS","rev":955.06,"mar":683.05,"trx":17},{"fy":"2024/25","week":32,"ws":"Mar 02/25","we":"Mar 08/25","ch":"Wholesale: DYA","rev":11097.94,"mar":5272.03,"trx":17},{"fy":"2024/25","week":32,"ws":"Mar 02/25","we":"Mar 08/25","ch":"Wholesale: House Account","rev":3828.34,"mar":1843.75,"trx":7},{"fy":"2024/25","week":33,"ws":"Mar 09/25","we":"Mar 15/25","ch":"Corporate","rev":3089.96,"mar":1910.72,"trx":2},{"fy":"2024/25","week":33,"ws":"Mar 09/25","we":"Mar 15/25","ch":"Ecommerce","rev":11767.3,"mar":7705.24,"trx":181},{"fy":"2024/25","week":33,"ws":"Mar 09/25","we":"Mar 15/25","ch":"Grocery","rev":2022.47,"mar":982.13,"trx":11},{"fy":"2024/25","week":33,"ws":"Mar 09/25","we":"Mar 15/25","ch":"POS","rev":645.35,"mar":449.19,"trx":10},{"fy":"2024/25","week":33,"ws":"Mar 09/25","we":"Mar 15/25","ch":"Wholesale: DYA","rev":9236.37,"mar":4099.14,"trx":15},{"fy":"2024/25","week":33,"ws":"Mar 09/25","we":"Mar 15/25","ch":"Wholesale: House Account","rev":2474.22,"mar":1180.13,"trx":5},{"fy":"2024/25","week":34,"ws":"Mar 16/25","we":"Mar 22/25","ch":"Corporate","rev":2748.11,"mar":1807.51,"trx":2},{"fy":"2024/25","week":34,"ws":"Mar 16/25","we":"Mar 22/25","ch":"Ecommerce","rev":9066.04,"mar":5681.73,"trx":146},{"fy":"2024/25","week":34,"ws":"Mar 16/25","we":"Mar 22/25","ch":"Grocery","rev":1298.22,"mar":698.85,"trx":6},{"fy":"2024/25","week":34,"ws":"Mar 16/25","we":"Mar 22/25","ch":"POS","rev":867.53,"mar":625.79,"trx":14},{"fy":"2024/25","week":34,"ws":"Mar 16/25","we":"Mar 22/25","ch":"Wholesale: DYA","rev":9870.46,"mar":4959.88,"trx":10},{"fy":"2024/25","week":34,"ws":"Mar 16/25","we":"Mar 22/25","ch":"Wholesale: House Account","rev":2542.92,"mar":1310.48,"trx":4},{"fy":"2024/25","week":35,"ws":"Mar 23/25","we":"Mar 29/25","ch":"Corporate","rev":3164.93,"mar":1953.86,"trx":2},{"fy":"2024/25","week":35,"ws":"Mar 23/25","we":"Mar 29/25","ch":"Ecommerce","rev":9952.49,"mar":7034.0,"trx":114},{"fy":"2024/25","week":35,"ws":"Mar 23/25","we":"Mar 29/25","ch":"Grocery","rev":1898.18,"mar":950.87,"trx":7},{"fy":"2024/25","week":35,"ws":"Mar 23/25","we":"Mar 29/25","ch":"POS","rev":592.12,"mar":394.1,"trx":7},{"fy":"2024/25","week":35,"ws":"Mar 23/25","we":"Mar 29/25","ch":"Wholesale: DYA","rev":10125.85,"mar":5064.3,"trx":11},{"fy":"2024/25","week":35,"ws":"Mar 23/25","we":"Mar 29/25","ch":"Wholesale: House Account","rev":2533.91,"mar":1263.75,"trx":4},{"fy":"2024/25","week":36,"ws":"Mar 30/25","we":"Apr 05/25","ch":"Corporate","rev":3847.58,"mar":2394.9,"trx":2},{"fy":"2024/25","week":36,"ws":"Mar 30/25","we":"Apr 05/25","ch":"Ecommerce","rev":8022.13,"mar":5188.07,"trx":85},{"fy":"2024/25","week":36,"ws":"Mar 30/25","we":"Apr 05/25","ch":"Grocery","rev":1389.42,"mar":666.33,"trx":6},{"fy":"2024/25","week":36,"ws":"Mar 30/25","we":"Apr 05/25","ch":"POS","rev":658.5,"mar":495.93,"trx":10},{"fy":"2024/25","week":36,"ws":"Mar 30/25","we":"Apr 05/25","ch":"Wholesale: DYA","rev":11041.86,"mar":4983.17,"trx":18},{"fy":"2024/25","week":36,"ws":"Mar 30/25","we":"Apr 05/25","ch":"Wholesale: House Account","rev":3008.24,"mar":1593.82,"trx":5},{"fy":"2024/25","week":37,"ws":"Apr 06/25","we":"Apr 12/25","ch":"Corporate","rev":3136.18,"mar":1925.91,"trx":2},{"fy":"2024/25","week":37,"ws":"Apr 06/25","we":"Apr 12/25","ch":"Ecommerce","rev":8159.63,"mar":5940.11,"trx":102},{"fy":"2024/25","week":37,"ws":"Apr 06/25","we":"Apr 12/25","ch":"Grocery","rev":2125.99,"mar":1087.95,"trx":7},{"fy":"2024/25","week":37,"ws":"Apr 06/25","we":"Apr 12/25","ch":"POS","rev":857.03,"mar":557.07,"trx":10},{"fy":"2024/25","week":37,"ws":"Apr 06/25","we":"Apr 12/25","ch":"Wholesale: DYA","rev":10849.84,"mar":5044.47,"trx":19},{"fy":"2024/25","week":37,"ws":"Apr 06/25","we":"Apr 12/25","ch":"Wholesale: House Account","rev":2496.06,"mar":1300.84,"trx":4},{"fy":"2024/25","week":38,"ws":"Apr 13/25","we":"Apr 19/25","ch":"Corporate","rev":3722.31,"mar":2206.54,"trx":2},{"fy":"2024/25","week":38,"ws":"Apr 13/25","we":"Apr 19/25","ch":"Ecommerce","rev":10662.23,"mar":7183.87,"trx":165},{"fy":"2024/25","week":38,"ws":"Apr 13/25","we":"Apr 19/25","ch":"Grocery","rev":2298.27,"mar":1157.89,"trx":11},{"fy":"2024/25","week":38,"ws":"Apr 13/25","we":"Apr 19/25","ch":"POS","rev":847.99,"mar":616.4,"trx":16},{"fy":"2024/25","week":38,"ws":"Apr 13/25","we":"Apr 19/25","ch":"Wholesale: DYA","rev":8724.86,"mar":3994.3,"trx":13},{"fy":"2024/25","week":38,"ws":"Apr 13/25","we":"Apr 19/25","ch":"Wholesale: House Account","rev":2566.47,"mar":1216.26,"trx":3},{"fy":"2024/25","week":39,"ws":"Apr 20/25","we":"Apr 26/25","ch":"Corporate","rev":2284.88,"mar":1405.41,"trx":2},{"fy":"2024/25","week":39,"ws":"Apr 20/25","we":"Apr 26/25","ch":"Ecommerce","rev":9663.7,"mar":6288.99,"trx":138},{"fy":"2024/25","week":39,"ws":"Apr 20/25","we":"Apr 26/25","ch":"Grocery","rev":2003.77,"mar":1034.3,"trx":10},{"fy":"2024/25","week":39,"ws":"Apr 20/25","we":"Apr 26/25","ch":"POS","rev":991.3,"mar":725.87,"trx":16},{"fy":"2024/25","week":39,"ws":"Apr 20/25","we":"Apr 26/25","ch":"Wholesale: DYA","rev":11438.43,"mar":5871.41,"trx":15},{"fy":"2024/25","week":39,"ws":"Apr 20/25","we":"Apr 26/25","ch":"Wholesale: House Account","rev":3273.28,"mar":1675.3,"trx":6},{"fy":"2024/25","week":40,"ws":"Apr 27/25","we":"May 03/25","ch":"Corporate","rev":3787.78,"mar":2187.38,"trx":2},{"fy":"2024/25","week":40,"ws":"Apr 27/25","we":"May 03/25","ch":"Ecommerce","rev":9766.23,"mar":6905.57,"trx":129},{"fy":"2024/25","week":40,"ws":"Apr 27/25","we":"May 03/25","ch":"Grocery","rev":1578.61,"mar":771.54,"trx":8},{"fy":"2024/25","week":40,"ws":"Apr 27/25","we":"May 03/25","ch":"POS","rev":889.08,"mar":666.44,"trx":13},{"fy":"2024/25","week":40,"ws":"Apr 27/25","we":"May 03/25","ch":"Wholesale: DYA","rev":10436.61,"mar":4673.28,"trx":10},{"fy":"2024/25","week":40,"ws":"Apr 27/25","we":"May 03/25","ch":"Wholesale: House Account","rev":3068.02,"mar":1490.4,"trx":4},{"fy":"2024/25","week":41,"ws":"May 04/25","we":"May 10/25","ch":"Corporate","rev":2575.35,"mar":1714.72,"trx":2},{"fy":"2024/25","week":41,"ws":"May 04/25","we":"May 10/25","ch":"Ecommerce","rev":12046.31,"mar":8782.31,"trx":199},{"fy":"2024/25","week":41,"ws":"May 04/25","we":"May 10/25","ch":"Grocery","rev":2076.06,"mar":1039.74,"trx":7},{"fy":"2024/25","week":41,"ws":"May 04/25","we":"May 10/25","ch":"POS","rev":963.01,"mar":670.93,"trx":16},{"fy":"2024/25","week":41,"ws":"May 04/25","we":"May 10/25","ch":"Wholesale: DYA","rev":13646.26,"mar":6216.39,"trx":19},{"fy":"2024/25","week":41,"ws":"May 04/25","we":"May 10/25","ch":"Wholesale: House Account","rev":3618.79,"mar":1807.0,"trx":4},{"fy":"2024/25","week":42,"ws":"May 11/25","we":"May 17/25","ch":"Corporate","rev":3068.09,"mar":1851.48,"trx":2},{"fy":"2024/25","week":42,"ws":"May 11/25","we":"May 17/25","ch":"Ecommerce","rev":13911.04,"mar":9201.91,"trx":198},{"fy":"2024/25","week":42,"ws":"May 11/25","we":"May 17/25","ch":"Grocery","rev":1661.28,"mar":925.4,"trx":9},{"fy":"2024/25","week":42,"ws":"May 11/25","we":"May 17/25","ch":"POS","rev":864.05,"mar":600.46,"trx":12},{"fy":"2024/25","week":42,"ws":"May 11/25","we":"May 17/25","ch":"Wholesale: DYA","rev":9911.62,"mar":5115.49,"trx":12},{"fy":"2024/25","week":42,"ws":"May 11/25","we":"May 17/25","ch":"Wholesale: House Account","rev":3388.02,"mar":1826.31,"trx":6},{"fy":"2024/25","week":43,"ws":"May 18/25","we":"May 24/25","ch":"Corporate","rev":3441.78,"mar":2104.28,"trx":2},{"fy":"2024/25","week":43,"ws":"May 18/25","we":"May 24/25","ch":"Ecommerce","rev":10637.74,"mar":7530.47,"trx":146},{"fy":"2024/25","week":43,"ws":"May 18/25","we":"May 24/25","ch":"Grocery","rev":2170.79,"mar":1075.27,"trx":10},{"fy":"2024/25","week":43,"ws":"May 18/25","we":"May 24/25","ch":"POS","rev":1045.28,"mar":724.45,"trx":18},{"fy":"2024/25","week":43,"ws":"May 18/25","we":"May 24/25","ch":"Wholesale: DYA","rev":8639.98,"mar":4461.15,"trx":12},{"fy":"2024/25","week":43,"ws":"May 18/25","we":"May 24/25","ch":"Wholesale: House Account","rev":2859.45,"mar":1351.58,"trx":5},{"fy":"2024/25","week":44,"ws":"May 25/25","we":"May 31/25","ch":"Corporate","rev":3460.32,"mar":2005.76,"trx":3},{"fy":"2024/25","week":44,"ws":"May 25/25","we":"May 31/25","ch":"Ecommerce","rev":14275.34,"mar":9647.35,"trx":140},{"fy":"2024/25","week":44,"ws":"May 25/25","we":"May 31/25","ch":"Grocery","rev":2248.71,"mar":1169.03,"trx":11},{"fy":"2024/25","week":44,"ws":"May 25/25","we":"May 31/25","ch":"POS","rev":844.26,"mar":569.56,"trx":15},{"fy":"2024/25","week":44,"ws":"May 25/25","we":"May 31/25","ch":"Wholesale: DYA","rev":14050.54,"mar":6467.72,"trx":19},{"fy":"2024/25","week":44,"ws":"May 25/25","we":"May 31/25","ch":"Wholesale: House Account","rev":3136.49,"mar":1674.1,"trx":5},{"fy":"2024/25","week":45,"ws":"Jun 01/25","we":"Jun 07/25","ch":"Corporate","rev":3679.48,"mar":2414.15,"trx":2},{"fy":"2024/25","week":45,"ws":"Jun 01/25","we":"Jun 07/25","ch":"Ecommerce","rev":12117.64,"mar":8127.86,"trx":194},{"fy":"2024/25","week":45,"ws":"Jun 01/25","we":"Jun 07/25","ch":"Grocery","rev":1708.52,"mar":934.0,"trx":7},{"fy":"2024/25","week":45,"ws":"Jun 01/25","we":"Jun 07/25","ch":"POS","rev":668.98,"mar":474.8,"trx":13},{"fy":"2024/25","week":45,"ws":"Jun 01/25","we":"Jun 07/25","ch":"Wholesale: DYA","rev":9863.76,"mar":4468.4,"trx":13},{"fy":"2024/25","week":45,"ws":"Jun 01/25","we":"Jun 07/25","ch":"Wholesale: House Account","rev":2756.37,"mar":1389.63,"trx":4},{"fy":"2024/25","week":46,"ws":"Jun 08/25","we":"Jun 14/25","ch":"Corporate","rev":2946.84,"mar":1774.94,"trx":1},{"fy":"2024/25","week":46,"ws":"Jun 08/25","we":"Jun 14/25","ch":"Ecommerce","rev":11568.14,"mar":7956.7,"trx":124},{"fy":"2024/25","week":46,"ws":"Jun 08/25","we":"Jun 14/25","ch":"Grocery","rev":1968.83,"mar":949.04,"trx":10},{"fy":"2024/25","week":46,"ws":"Jun 08/25","we":"Jun 14/25","ch":"POS","rev":844.66,"mar":620.72,"trx":12},{"fy":"2024/25","week":46,"ws":"Jun 08/25","we":"Jun 14/25","ch":"Wholesale: DYA","rev":10850.62,"mar":5475.59,"trx":19},{"fy":"2024/25","week":46,"ws":"Jun 08/25","we":"Jun 14/25","ch":"Wholesale: House Account","rev":3015.93,"mar":1396.26,"trx":5},{"fy":"2024/25","week":47,"ws":"Jun 15/25","we":"Jun 21/25","ch":"Corporate","rev":3179.83,"mar":2088.11,"trx":2},{"fy":"2024/25","week":47,"ws":"Jun 15/25","we":"Jun 21/25","ch":"Ecommerce","rev":10040.42,"mar":6855.83,"trx":124},{"fy":"2024/25","week":47,"ws":"Jun 15/25","we":"Jun 21/25","ch":"Grocery","rev":1917.22,"mar":982.59,"trx":9},{"fy":"2024/25","week":47,"ws":"Jun 15/25","we":"Jun 21/25","ch":"POS","rev":606.68,"mar":422.6,"trx":12},{"fy":"2024/25","week":47,"ws":"Jun 15/25","we":"Jun 21/25","ch":"Wholesale: DYA","rev":9007.14,"mar":4456.73,"trx":13},{"fy":"2024/25","week":47,"ws":"Jun 15/25","we":"Jun 21/25","ch":"Wholesale: House Account","rev":3631.85,"mar":1918.3,"trx":7},{"fy":"2024/25","week":48,"ws":"Jun 22/25","we":"Jun 28/25","ch":"Corporate","rev":2816.66,"mar":1695.1,"trx":2},{"fy":"2024/25","week":48,"ws":"Jun 22/25","we":"Jun 28/25","ch":"Ecommerce","rev":11935.85,"mar":8599.96,"trx":110},{"fy":"2024/25","week":48,"ws":"Jun 22/25","we":"Jun 28/25","ch":"Grocery","rev":1281.5,"mar":680.36,"trx":7},{"fy":"2024/25","week":48,"ws":"Jun 22/25","we":"Jun 28/25","ch":"POS","rev":970.89,"mar":706.46,"trx":14},{"fy":"2024/25","week":48,"ws":"Jun 22/25","we":"Jun 28/25","ch":"Wholesale: DYA","rev":7645.67,"mar":3748.46,"trx":12},{"fy":"2024/25","week":48,"ws":"Jun 22/25","we":"Jun 28/25","ch":"Wholesale: House Account","rev":2926.68,"mar":1508.76,"trx":6},{"fy":"2024/25","week":49,"ws":"Jun 29/25","we":"Jul 05/25","ch":"Corporate","rev":2239.47,"mar":1454.26,"trx":1},{"fy":"2024/25","week":49,"ws":"Jun 29/25","we":"Jul 05/25","ch":"Ecommerce","rev":9651.56,"mar":6190.88,"trx":125},{"fy":"2024/25","week":49,"ws":"Jun 29/25","we":"Jul 05/25","ch":"Grocery","rev":1765.08,"mar":960.8,"trx":6},{"fy":"2024/25","week":49,"ws":"Jun 29/25","we":"Jul 05/25","ch":"POS","rev":574.11,"mar":425.72,"trx":9},{"fy":"2024/25","week":49,"ws":"Jun 29/25","we":"Jul 05/25","ch":"Wholesale: DYA","rev":8453.0,"mar":4325.44,"trx":9},{"fy":"2024/25","week":49,"ws":"Jun 29/25","we":"Jul 05/25","ch":"Wholesale: House Account","rev":2956.87,"mar":1420.24,"trx":4},{"fy":"2024/25","week":50,"ws":"Jul 06/25","we":"Jul 12/25","ch":"Corporate","rev":2055.34,"mar":1336.42,"trx":2},{"fy":"2024/25","week":50,"ws":"Jul 06/25","we":"Jul 12/25","ch":"Ecommerce","rev":10813.9,"mar":6951.04,"trx":133},{"fy":"2024/25","week":50,"ws":"Jul 06/25","we":"Jul 12/25","ch":"Grocery","rev":1464.73,"mar":772.33,"trx":7},{"fy":"2024/25","week":50,"ws":"Jul 06/25","we":"Jul 12/25","ch":"POS","rev":683.12,"mar":459.06,"trx":12},{"fy":"2024/25","week":50,"ws":"Jul 06/25","we":"Jul 12/25","ch":"Wholesale: DYA","rev":7760.56,"mar":3656.34,"trx":10},{"fy":"2024/25","week":50,"ws":"Jul 06/25","we":"Jul 12/25","ch":"Wholesale: House Account","rev":2427.12,"mar":1227.53,"trx":4},{"fy":"2024/25","week":51,"ws":"Jul 13/25","we":"Jul 19/25","ch":"Corporate","rev":3660.07,"mar":2194.9,"trx":3},{"fy":"2024/25","week":51,"ws":"Jul 13/25","we":"Jul 19/25","ch":"Ecommerce","rev":10705.17,"mar":7016.85,"trx":142},{"fy":"2024/25","week":51,"ws":"Jul 13/25","we":"Jul 19/25","ch":"Grocery","rev":1777.06,"mar":960.25,"trx":6},{"fy":"2024/25","week":51,"ws":"Jul 13/25","we":"Jul 19/25","ch":"POS","rev":757.41,"mar":529.91,"trx":14},{"fy":"2024/25","week":51,"ws":"Jul 13/25","we":"Jul 19/25","ch":"Wholesale: DYA","rev":8226.32,"mar":4137.45,"trx":12},{"fy":"2024/25","week":51,"ws":"Jul 13/25","we":"Jul 19/25","ch":"Wholesale: House Account","rev":2614.99,"mar":1336.08,"trx":4},{"fy":"2024/25","week":52,"ws":"Jul 20/25","we":"Jul 26/25","ch":"Corporate","rev":3146.11,"mar":2019.54,"trx":2},{"fy":"2024/25","week":52,"ws":"Jul 20/25","we":"Jul 26/25","ch":"Ecommerce","rev":11715.57,"mar":8130.06,"trx":185},{"fy":"2024/25","week":52,"ws":"Jul 20/25","we":"Jul 26/25","ch":"Grocery","rev":1740.84,"mar":877.56,"trx":7},{"fy":"2024/25","week":52,"ws":"Jul 20/25","we":"Jul 26/25","ch":"POS","rev":746.47,"mar":541.96,"trx":8},{"fy":"2024/25","week":52,"ws":"Jul 20/25","we":"Jul 26/25","ch":"Wholesale: DYA","rev":8274.07,"mar":4128.81,"trx":9},{"fy":"2024/25","week":52,"ws":"Jul 20/25","we":"Jul 26/25","ch":"Wholesale: House Account","rev":2255.68,"mar":1134.95,"trx":5},{"fy":"2025/26","week":1,"ws":"Jul 28/25","we":"Aug 03/25","ch":"Corporate","rev":3429.49,"mar":2266.95,"trx":3},{"fy":"2025/26","week":1,"ws":"Jul 28/25","we":"Aug 03/25","ch":"Ecommerce","rev":9975.84,"mar":7135.98,"trx":126},{"fy":"2025/26","week":1,"ws":"Jul 28/25","we":"Aug 03/25","ch":"Grocery","rev":2227.67,"mar":1204.09,"trx":9},{"fy":"2025/26","week":1,"ws":"Jul 28/25","we":"Aug 03/25","ch":"POS","rev":657.25,"mar":494.15,"trx":8},{"fy":"2025/26","week":1,"ws":"Jul 28/25","we":"Aug 03/25","ch":"Wholesale: DYA","rev":14005.84,"mar":7110.19,"trx":21},{"fy":"2025/26","week":1,"ws":"Jul 28/25","we":"Aug 03/25","ch":"Wholesale: House Account","rev":4294.33,"mar":2307.69,"trx":8},{"fy":"2025/26","week":2,"ws":"Aug 04/25","we":"Aug 10/25","ch":"Corporate","rev":3294.63,"mar":2137.67,"trx":1},{"fy":"2025/26","week":2,"ws":"Aug 04/25","we":"Aug 10/25","ch":"Ecommerce","rev":12522.44,"mar":8453.66,"trx":176},{"fy":"2025/26","week":2,"ws":"Aug 04/25","we":"Aug 10/25","ch":"Grocery","rev":2204.85,"mar":1162.03,"trx":12},{"fy":"2025/26","week":2,"ws":"Aug 04/25","we":"Aug 10/25","ch":"POS","rev":1116.52,"mar":732.59,"trx":14},{"fy":"2025/26","week":2,"ws":"Aug 04/25","we":"Aug 10/25","ch":"Wholesale: DYA","rev":8530.68,"mar":4346.46,"trx":12},{"fy":"2025/26","week":2,"ws":"Aug 04/25","we":"Aug 10/25","ch":"Wholesale: House Account","rev":4415.04,"mar":2109.11,"trx":5},{"fy":"2025/26","week":3,"ws":"Aug 11/25","we":"Aug 17/25","ch":"Corporate","rev":4228.67,"mar":2793.51,"trx":2},{"fy":"2025/26","week":3,"ws":"Aug 11/25","we":"Aug 17/25","ch":"Ecommerce","rev":11623.33,"mar":7448.32,"trx":188},{"fy":"2025/26","week":3,"ws":"Aug 11/25","we":"Aug 17/25","ch":"Grocery","rev":1782.79,"mar":925.96,"trx":6},{"fy":"2025/26","week":3,"ws":"Aug 11/25","we":"Aug 17/25","ch":"POS","rev":1089.49,"mar":718.19,"trx":16},{"fy":"2025/26","week":3,"ws":"Aug 11/25","we":"Aug 17/25","ch":"Wholesale: DYA","rev":12849.21,"mar":6407.56,"trx":22},{"fy":"2025/26","week":3,"ws":"Aug 11/25","we":"Aug 17/25","ch":"Wholesale: House Account","rev":3403.42,"mar":1767.67,"trx":4},{"fy":"2025/26","week":4,"ws":"Aug 18/25","we":"Aug 24/25","ch":"Corporate","rev":3394.77,"mar":1969.72,"trx":2},{"fy":"2025/26","week":4,"ws":"Aug 18/25","we":"Aug 24/25","ch":"Ecommerce","rev":11622.07,"mar":8473.95,"trx":106},{"fy":"2025/26","week":4,"ws":"Aug 18/25","we":"Aug 24/25","ch":"Grocery","rev":1858.68,"mar":957.76,"trx":10},{"fy":"2025/26","week":4,"ws":"Aug 18/25","we":"Aug 24/25","ch":"POS","rev":1073.27,"mar":703.13,"trx":18},{"fy":"2025/26","week":4,"ws":"Aug 18/25","we":"Aug 24/25","ch":"Wholesale: DYA","rev":12006.05,"mar":6203.51,"trx":15},{"fy":"2025/26","week":4,"ws":"Aug 18/25","we":"Aug 24/25","ch":"Wholesale: House Account","rev":3360.62,"mar":1596.92,"trx":4},{"fy":"2025/26","week":5,"ws":"Aug 25/25","we":"Aug 31/25","ch":"Corporate","rev":4277.97,"mar":2633.12,"trx":3},{"fy":"2025/26","week":5,"ws":"Aug 25/25","we":"Aug 31/25","ch":"Ecommerce","rev":13259.33,"mar":9156.49,"trx":120},{"fy":"2025/26","week":5,"ws":"Aug 25/25","we":"Aug 31/25","ch":"Grocery","rev":2336.12,"mar":1164.94,"trx":8},{"fy":"2025/26","week":5,"ws":"Aug 25/25","we":"Aug 31/25","ch":"POS","rev":925.0,"mar":602.81,"trx":16},{"fy":"2025/26","week":5,"ws":"Aug 25/25","we":"Aug 31/25","ch":"Wholesale: DYA","rev":9749.26,"mar":4466.97,"trx":16},{"fy":"2025/26","week":5,"ws":"Aug 25/25","we":"Aug 31/25","ch":"Wholesale: House Account","rev":3218.75,"mar":1518.62,"trx":6},{"fy":"2025/26","week":6,"ws":"Sep 01/25","we":"Sep 07/25","ch":"Corporate","rev":2838.42,"mar":1860.74,"trx":1},{"fy":"2025/26","week":6,"ws":"Sep 01/25","we":"Sep 07/25","ch":"Ecommerce","rev":10747.38,"mar":7016.65,"trx":110},{"fy":"2025/26","week":6,"ws":"Sep 01/25","we":"Sep 07/25","ch":"Grocery","rev":2435.45,"mar":1170.34,"trx":8},{"fy":"2025/26","week":6,"ws":"Sep 01/25","we":"Sep 07/25","ch":"POS","rev":1155.45,"mar":774.9,"trx":15},{"fy":"2025/26","week":6,"ws":"Sep 01/25","we":"Sep 07/25","ch":"Wholesale: DYA","rev":10587.85,"mar":4718.2,"trx":16},{"fy":"2025/26","week":6,"ws":"Sep 01/25","we":"Sep 07/25","ch":"Wholesale: House Account","rev":4023.9,"mar":2091.03,"trx":6},{"fy":"2025/26","week":7,"ws":"Sep 08/25","we":"Sep 14/25","ch":"Corporate","rev":4594.68,"mar":2854.74,"trx":2},{"fy":"2025/26","week":7,"ws":"Sep 08/25","we":"Sep 14/25","ch":"Ecommerce","rev":13658.9,"mar":9949.98,"trx":126},{"fy":"2025/26","week":7,"ws":"Sep 08/25","we":"Sep 14/25","ch":"Grocery","rev":2591.14,"mar":1426.51,"trx":12},{"fy":"2025/26","week":7,"ws":"Sep 08/25","we":"Sep 14/25","ch":"POS","rev":967.44,"mar":727.49,"trx":11},{"fy":"2025/26","week":7,"ws":"Sep 08/25","we":"Sep 14/25","ch":"Wholesale: DYA","rev":12853.25,"mar":6072.44,"trx":19},{"fy":"2025/26","week":7,"ws":"Sep 08/25","we":"Sep 14/25","ch":"Wholesale: House Account","rev":3942.75,"mar":2100.6,"trx":5},{"fy":"2025/26","week":8,"ws":"Sep 15/25","we":"Sep 21/25","ch":"Corporate","rev":3015.04,"mar":1901.72,"trx":1},{"fy":"2025/26","week":8,"ws":"Sep 15/25","we":"Sep 21/25","ch":"Ecommerce","rev":11876.82,"mar":8248.2,"trx":156},{"fy":"2025/26","week":8,"ws":"Sep 15/25","we":"Sep 21/25","ch":"Grocery","rev":2007.42,"mar":1126.47,"trx":9},{"fy":"2025/26","week":8,"ws":"Sep 15/25","we":"Sep 21/25","ch":"POS","rev":964.98,"mar":686.88,"trx":11},{"fy":"2025/26","week":8,"ws":"Sep 15/25","we":"Sep 21/25","ch":"Wholesale: DYA","rev":14509.53,"mar":7357.7,"trx":21},{"fy":"2025/26","week":8,"ws":"Sep 15/25","we":"Sep 21/25","ch":"Wholesale: House Account","rev":4574.16,"mar":2367.89,"trx":6},{"fy":"2025/26","week":9,"ws":"Sep 22/25","we":"Sep 28/25","ch":"Corporate","rev":3855.04,"mar":2286.3,"trx":2},{"fy":"2025/26","week":9,"ws":"Sep 22/25","we":"Sep 28/25","ch":"Ecommerce","rev":13266.85,"mar":8900.19,"trx":128},{"fy":"2025/26","week":9,"ws":"Sep 22/25","we":"Sep 28/25","ch":"Grocery","rev":2136.87,"mar":1140.53,"trx":9},{"fy":"2025/26","week":9,"ws":"Sep 22/25","we":"Sep 28/25","ch":"POS","rev":794.45,"mar":593.75,"trx":9},{"fy":"2025/26","week":9,"ws":"Sep 22/25","we":"Sep 28/25","ch":"Wholesale: DYA","rev":15475.89,"mar":6944.96,"trx":16},{"fy":"2025/26","week":9,"ws":"Sep 22/25","we":"Sep 28/25","ch":"Wholesale: House Account","rev":4505.82,"mar":2365.29,"trx":7},{"fy":"2025/26","week":10,"ws":"Sep 29/25","we":"Oct 05/25","ch":"Corporate","rev":4160.7,"mar":2605.05,"trx":2},{"fy":"2025/26","week":10,"ws":"Sep 29/25","we":"Oct 05/25","ch":"Ecommerce","rev":10686.94,"mar":7096.89,"trx":150},{"fy":"2025/26","week":10,"ws":"Sep 29/25","we":"Oct 05/25","ch":"Grocery","rev":2549.16,"mar":1403.63,"trx":13},{"fy":"2025/26","week":10,"ws":"Sep 29/25","we":"Oct 05/25","ch":"POS","rev":1256.5,"mar":893.68,"trx":17},{"fy":"2025/26","week":10,"ws":"Sep 29/25","we":"Oct 05/25","ch":"Wholesale: DYA","rev":13588.75,"mar":6222.81,"trx":20},{"fy":"2025/26","week":10,"ws":"Sep 29/25","we":"Oct 05/25","ch":"Wholesale: House Account","rev":3340.05,"mar":1565.34,"trx":6},{"fy":"2025/26","week":11,"ws":"Oct 06/25","we":"Oct 12/25","ch":"Corporate","rev":4031.22,"mar":2604.37,"trx":3},{"fy":"2025/26","week":11,"ws":"Oct 06/25","we":"Oct 12/25","ch":"Ecommerce","rev":17623.8,"mar":12646.01,"trx":288},{"fy":"2025/26","week":11,"ws":"Oct 06/25","we":"Oct 12/25","ch":"Grocery","rev":2899.6,"mar":1535.19,"trx":14},{"fy":"2025/26","week":11,"ws":"Oct 06/25","we":"Oct 12/25","ch":"POS","rev":795.16,"mar":594.83,"trx":14},{"fy":"2025/26","week":11,"ws":"Oct 06/25","we":"Oct 12/25","ch":"Wholesale: DYA","rev":12408.78,"mar":5651.65,"trx":19},{"fy":"2025/26","week":11,"ws":"Oct 06/25","we":"Oct 12/25","ch":"Wholesale: House Account","rev":3885.24,"mar":1892.83,"trx":4},{"fy":"2025/26","week":12,"ws":"Oct 13/25","we":"Oct 19/25","ch":"Corporate","rev":5283.04,"mar":3310.24,"trx":3},{"fy":"2025/26","week":12,"ws":"Oct 13/25","we":"Oct 19/25","ch":"Ecommerce","rev":11923.91,"mar":8281.03,"trx":109},{"fy":"2025/26","week":12,"ws":"Oct 13/25","we":"Oct 19/25","ch":"Grocery","rev":2798.23,"mar":1388.76,"trx":12},{"fy":"2025/26","week":12,"ws":"Oct 13/25","we":"Oct 19/25","ch":"POS","rev":991.19,"mar":679.41,"trx":17},{"fy":"2025/26","week":12,"ws":"Oct 13/25","we":"Oct 19/25","ch":"Wholesale: DYA","rev":16574.25,"mar":8041.68,"trx":17},{"fy":"2025/26","week":12,"ws":"Oct 13/25","we":"Oct 19/25","ch":"Wholesale: House Account","rev":3246.31,"mar":1534.18,"trx":5},{"fy":"2025/26","week":13,"ws":"Oct 20/25","we":"Oct 26/25","ch":"Corporate","rev":4794.84,"mar":2864.4,"trx":3},{"fy":"2025/26","week":13,"ws":"Oct 20/25","we":"Oct 26/25","ch":"Ecommerce","rev":14869.07,"mar":10017.21,"trx":163},{"fy":"2025/26","week":13,"ws":"Oct 20/25","we":"Oct 26/25","ch":"Grocery","rev":2810.61,"mar":1371.21,"trx":12},{"fy":"2025/26","week":13,"ws":"Oct 20/25","we":"Oct 26/25","ch":"POS","rev":955.27,"mar":687.79,"trx":14},{"fy":"2025/26","week":13,"ws":"Oct 20/25","we":"Oct 26/25","ch":"Wholesale: DYA","rev":15677.16,"mar":6977.72,"trx":20},{"fy":"2025/26","week":13,"ws":"Oct 20/25","we":"Oct 26/25","ch":"Wholesale: House Account","rev":4608.81,"mar":2122.89,"trx":6},{"fy":"2025/26","week":14,"ws":"Oct 27/25","we":"Nov 02/25","ch":"Corporate","rev":3641.63,"mar":2126.76,"trx":2},{"fy":"2025/26","week":14,"ws":"Oct 27/25","we":"Nov 02/25","ch":"Ecommerce","rev":13519.46,"mar":8469.14,"trx":198},{"fy":"2025/26","week":14,"ws":"Oct 27/25","we":"Nov 02/25","ch":"Grocery","rev":1998.6,"mar":1019.35,"trx":10},{"fy":"2025/26","week":14,"ws":"Oct 27/25","we":"Nov 02/25","ch":"POS","rev":1090.48,"mar":804.05,"trx":19},{"fy":"2025/26","week":14,"ws":"Oct 27/25","we":"Nov 02/25","ch":"Wholesale: DYA","rev":10811.14,"mar":5489.72,"trx":10},{"fy":"2025/26","week":14,"ws":"Oct 27/25","we":"Nov 02/25","ch":"Wholesale: House Account","rev":3161.91,"mar":1687.49,"trx":6},{"fy":"2025/26","week":15,"ws":"Nov 03/25","we":"Nov 09/25","ch":"Corporate","rev":5791.02,"mar":3632.6,"trx":4},{"fy":"2025/26","week":15,"ws":"Nov 03/25","we":"Nov 09/25","ch":"Ecommerce","rev":18183.2,"mar":11603.26,"trx":165},{"fy":"2025/26","week":15,"ws":"Nov 03/25","we":"Nov 09/25","ch":"Grocery","rev":2809.64,"mar":1531.45,"trx":13},{"fy":"2025/26","week":15,"ws":"Nov 03/25","we":"Nov 09/25","ch":"POS","rev":1650.96,"mar":1233.29,"trx":19},{"fy":"2025/26","week":15,"ws":"Nov 03/25","we":"Nov 09/25","ch":"Wholesale: DYA","rev":21798.56,"mar":10033.59,"trx":31},{"fy":"2025/26","week":15,"ws":"Nov 03/25","we":"Nov 09/25","ch":"Wholesale: House Account","rev":5626.73,"mar":2766.45,"trx":8},{"fy":"2025/26","week":16,"ws":"Nov 10/25","we":"Nov 16/25","ch":"Corporate","rev":5041.68,"mar":3042.35,"trx":3},{"fy":"2025/26","week":16,"ws":"Nov 10/25","we":"Nov 16/25","ch":"Ecommerce","rev":19194.9,"mar":12246.46,"trx":246},{"fy":"2025/26","week":16,"ws":"Nov 10/25","we":"Nov 16/25","ch":"Grocery","rev":3846.51,"mar":1951.98,"trx":19},{"fy":"2025/26","week":16,"ws":"Nov 10/25","we":"Nov 16/25","ch":"POS","rev":1640.59,"mar":1206.3,"trx":21},{"fy":"2025/26","week":16,"ws":"Nov 10/25","we":"Nov 16/25","ch":"Wholesale: DYA","rev":14533.63,"mar":6638.24,"trx":21},{"fy":"2025/26","week":16,"ws":"Nov 10/25","we":"Nov 16/25","ch":"Wholesale: House Account","rev":6376.08,"mar":3267.36,"trx":8},{"fy":"2025/26","week":17,"ws":"Nov 17/25","we":"Nov 23/25","ch":"Corporate","rev":6416.15,"mar":3974.27,"trx":5},{"fy":"2025/26","week":17,"ws":"Nov 17/25","we":"Nov 23/25","ch":"Ecommerce","rev":21914.09,"mar":14779.76,"trx":350},{"fy":"2025/26","week":17,"ws":"Nov 17/25","we":"Nov 23/25","ch":"Grocery","rev":3237.34,"mar":1719.86,"trx":15},{"fy":"2025/26","week":17,"ws":"Nov 17/25","we":"Nov 23/25","ch":"POS","rev":1676.51,"mar":1197.44,"trx":20},{"fy":"2025/26","week":17,"ws":"Nov 17/25","we":"Nov 23/25","ch":"Wholesale: DYA","rev":13720.2,"mar":6524.8,"trx":16},{"fy":"2025/26","week":17,"ws":"Nov 17/25","we":"Nov 23/25","ch":"Wholesale: House Account","rev":4836.02,"mar":2246.3,"trx":8},{"fy":"2025/26","week":18,"ws":"Nov 24/25","we":"Nov 30/25","ch":"Corporate","rev":4949.36,"mar":3044.99,"trx":2},{"fy":"2025/26","week":18,"ws":"Nov 24/25","we":"Nov 30/25","ch":"Ecommerce","rev":22697.15,"mar":14388.82,"trx":352},{"fy":"2025/26","week":18,"ws":"Nov 24/25","we":"Nov 30/25","ch":"Grocery","rev":3756.18,"mar":1989.16,"trx":17},{"fy":"2025/26","week":18,"ws":"Nov 24/25","we":"Nov 30/25","ch":"POS","rev":1358.11,"mar":958.94,"trx":24},{"fy":"2025/26","week":18,"ws":"Nov 24/25","we":"Nov 30/25","ch":"Wholesale: DYA","rev":22333.43,"mar":10633.83,"trx":35},{"fy":"2025/26","week":18,"ws":"Nov 24/25","we":"Nov 30/25","ch":"Wholesale: House Account","rev":6032.32,"mar":2930.03,"trx":9},{"fy":"2025/26","week":19,"ws":"Dec 01/25","we":"Dec 07/25","ch":"Corporate","rev":5078.07,"mar":2927.7,"trx":2},{"fy":"2025/26","week":19,"ws":"Dec 01/25","we":"Dec 07/25","ch":"Ecommerce","rev":26779.84,"mar":17754.12,"trx":385},{"fy":"2025/26","week":19,"ws":"Dec 01/25","we":"Dec 07/25","ch":"Grocery","rev":3577.6,"mar":1762.89,"trx":13},{"fy":"2025/26","week":19,"ws":"Dec 01/25","we":"Dec 07/25","ch":"POS","rev":1529.51,"mar":1060.28,"trx":23},{"fy":"2025/26","week":19,"ws":"Dec 01/25","we":"Dec 07/25","ch":"Wholesale: DYA","rev":16756.19,"mar":7879.35,"trx":19},{"fy":"2025/26","week":19,"ws":"Dec 01/25","we":"Dec 07/25","ch":"Wholesale: House Account","rev":6012.97,"mar":2928.73,"trx":10},{"fy":"2025/26","week":20,"ws":"Dec 08/25","we":"Dec 14/25","ch":"Corporate","rev":7392.12,"mar":4691.13,"trx":3},{"fy":"2025/26","week":20,"ws":"Dec 08/25","we":"Dec 14/25","ch":"Ecommerce","rev":16753.62,"mar":11717.61,"trx":186},{"fy":"2025/26","week":20,"ws":"Dec 08/25","we":"Dec 14/25","ch":"Grocery","rev":4024.52,"mar":2145.17,"trx":22},{"fy":"2025/26","week":20,"ws":"Dec 08/25","we":"Dec 14/25","ch":"POS","rev":1924.2,"mar":1311.03,"trx":30},{"fy":"2025/26","week":20,"ws":"Dec 08/25","we":"Dec 14/25","ch":"Wholesale: DYA","rev":16550.21,"mar":7753.21,"trx":28},{"fy":"2025/26","week":20,"ws":"Dec 08/25","we":"Dec 14/25","ch":"Wholesale: House Account","rev":7063.16,"mar":3470.53,"trx":12},{"fy":"2025/26","week":21,"ws":"Dec 15/25","we":"Dec 21/25","ch":"Corporate","rev":7931.42,"mar":4767.66,"trx":5},{"fy":"2025/26","week":21,"ws":"Dec 15/25","we":"Dec 21/25","ch":"Ecommerce","rev":25440.74,"mar":18166.58,"trx":357},{"fy":"2025/26","week":21,"ws":"Dec 15/25","we":"Dec 21/25","ch":"Grocery","rev":4239.08,"mar":2288.54,"trx":21},{"fy":"2025/26","week":21,"ws":"Dec 15/25","we":"Dec 21/25","ch":"POS","rev":1609.84,"mar":1153.22,"trx":23},{"fy":"2025/26","week":21,"ws":"Dec 15/25","we":"Dec 21/25","ch":"Wholesale: DYA","rev":19171.73,"mar":9000.12,"trx":21},{"fy":"2025/26","week":21,"ws":"Dec 15/25","we":"Dec 21/25","ch":"Wholesale: House Account","rev":5307.64,"mar":2843.9,"trx":8},{"fy":"2025/26","week":22,"ws":"Dec 22/25","we":"Dec 28/25","ch":"Corporate","rev":5352.41,"mar":3126.06,"trx":2},{"fy":"2025/26","week":22,"ws":"Dec 22/25","we":"Dec 28/25","ch":"Ecommerce","rev":26098.25,"mar":16614.25,"trx":386},{"fy":"2025/26","week":22,"ws":"Dec 22/25","we":"Dec 28/25","ch":"Grocery","rev":4251.64,"mar":2346.58,"trx":14},{"fy":"2025/26","week":22,"ws":"Dec 22/25","we":"Dec 28/25","ch":"POS","rev":1437.99,"mar":1049.48,"trx":17},{"fy":"2025/26","week":22,"ws":"Dec 22/25","we":"Dec 28/25","ch":"Wholesale: DYA","rev":19348.86,"mar":8785.55,"trx":31},{"fy":"2025/26","week":22,"ws":"Dec 22/25","we":"Dec 28/25","ch":"Wholesale: House Account","rev":7326.4,"mar":3844.33,"trx":9},{"fy":"2025/26","week":23,"ws":"Dec 29/25","we":"Jan 04/26","ch":"Corporate","rev":6117.75,"mar":3738.91,"trx":4},{"fy":"2025/26","week":23,"ws":"Dec 29/25","we":"Jan 04/26","ch":"Ecommerce","rev":18535.82,"mar":12491.82,"trx":205},{"fy":"2025/26","week":23,"ws":"Dec 29/25","we":"Jan 04/26","ch":"Grocery","rev":4075.1,"mar":2101.74,"trx":18},{"fy":"2025/26","week":23,"ws":"Dec 29/25","we":"Jan 04/26","ch":"POS","rev":1413.25,"mar":1038.13,"trx":21},{"fy":"2025/26","week":23,"ws":"Dec 29/25","we":"Jan 04/26","ch":"Wholesale: DYA","rev":24801.17,"mar":11652.83,"trx":42},{"fy":"2025/26","week":23,"ws":"Dec 29/25","we":"Jan 04/26","ch":"Wholesale: House Account","rev":8099.75,"mar":4025.04,"trx":11},{"fy":"2025/26","week":24,"ws":"Jan 05/26","we":"Jan 11/26","ch":"Corporate","rev":3327.45,"mar":2072.08,"trx":3},{"fy":"2025/26","week":24,"ws":"Jan 05/26","we":"Jan 11/26","ch":"Ecommerce","rev":14487.25,"mar":10326.18,"trx":144},{"fy":"2025/26","week":24,"ws":"Jan 05/26","we":"Jan 11/26","ch":"Grocery","rev":1720.44,"mar":914.84,"trx":9},{"fy":"2025/26","week":24,"ws":"Jan 05/26","we":"Jan 11/26","ch":"POS","rev":919.88,"mar":602.97,"trx":17},{"fy":"2025/26","week":24,"ws":"Jan 05/26","we":"Jan 11/26","ch":"Wholesale: DYA","rev":14058.06,"mar":6515.81,"trx":22},{"fy":"2025/26","week":24,"ws":"Jan 05/26","we":"Jan 11/26","ch":"Wholesale: House Account","rev":3105.03,"mar":1653.19,"trx":4},{"fy":"2025/26","week":25,"ws":"Jan 12/26","we":"Jan 18/26","ch":"Corporate","rev":3440.82,"mar":2285.68,"trx":2},{"fy":"2025/26","week":25,"ws":"Jan 12/26","we":"Jan 18/26","ch":"Ecommerce","rev":11923.55,"mar":7912.88,"trx":109},{"fy":"2025/26","week":25,"ws":"Jan 12/26","we":"Jan 18/26","ch":"Grocery","rev":1494.78,"mar":777.54,"trx":6},{"fy":"2025/26","week":25,"ws":"Jan 12/26","we":"Jan 18/26","ch":"POS","rev":1144.17,"mar":784.89,"trx":12},{"fy":"2025/26","week":25,"ws":"Jan 12/26","we":"Jan 18/26","ch":"Wholesale: DYA","rev":14591.03,"mar":7383.77,"trx":21},{"fy":"2025/26","week":25,"ws":"Jan 12/26","we":"Jan 18/26","ch":"Wholesale: House Account","rev":4162.46,"mar":1960.55,"trx":6},{"fy":"2025/26","week":26,"ws":"Jan 19/26","we":"Jan 25/26","ch":"Corporate","rev":4240.72,"mar":2711.73,"trx":2},{"fy":"2025/26","week":26,"ws":"Jan 19/26","we":"Jan 25/26","ch":"Ecommerce","rev":13706.74,"mar":9243.93,"trx":123},{"fy":"2025/26","week":26,"ws":"Jan 19/26","we":"Jan 25/26","ch":"Grocery","rev":1524.57,"mar":761.82,"trx":8},{"fy":"2025/26","week":26,"ws":"Jan 19/26","we":"Jan 25/26","ch":"POS","rev":916.96,"mar":665.21,"trx":14},{"fy":"2025/26","week":26,"ws":"Jan 19/26","we":"Jan 25/26","ch":"Wholesale: DYA","rev":9107.16,"mar":4223.23,"trx":11},{"fy":"2025/26","week":26,"ws":"Jan 19/26","we":"Jan 25/26","ch":"Wholesale: House Account","rev":2646.16,"mar":1306.11,"trx":5},{"fy":"2025/26","week":27,"ws":"Jan 26/26","we":"Feb 01/26","ch":"Corporate","rev":3480.87,"mar":2023.77,"trx":3},{"fy":"2025/26","week":27,"ws":"Jan 26/26","we":"Feb 01/26","ch":"Ecommerce","rev":12944.16,"mar":8121.01,"trx":166},{"fy":"2025/26","week":27,"ws":"Jan 26/26","we":"Feb 01/26","ch":"Grocery","rev":1711.19,"mar":839.07,"trx":7},{"fy":"2025/26","week":27,"ws":"Jan 26/26","we":"Feb 01/26","ch":"POS","rev":950.61,"mar":637.81,"trx":14},{"fy":"2025/26","week":27,"ws":"Jan 26/26","we":"Feb 01/26","ch":"Wholesale: DYA","rev":12808.29,"mar":5740.36,"trx":22},{"fy":"2025/26","week":27,"ws":"Jan 26/26","we":"Feb 01/26","ch":"Wholesale: House Account","rev":2686.8,"mar":1349.0,"trx":4},{"fy":"2025/26","week":28,"ws":"Feb 02/26","we":"Feb 08/26","ch":"Corporate","rev":4310.49,"mar":2695.66,"trx":3},{"fy":"2025/26","week":28,"ws":"Feb 02/26","we":"Feb 08/26","ch":"Ecommerce","rev":11386.95,"mar":7911.21,"trx":187},{"fy":"2025/26","week":28,"ws":"Feb 02/26","we":"Feb 08/26","ch":"Grocery","rev":1628.81,"mar":781.42,"trx":8},{"fy":"2025/26","week":28,"ws":"Feb 02/26","we":"Feb 08/26","ch":"POS","rev":767.8,"mar":557.49,"trx":12},{"fy":"2025/26","week":28,"ws":"Feb 02/26","we":"Feb 08/26","ch":"Wholesale: DYA","rev":12773.67,"mar":6362.08,"trx":15},{"fy":"2025/26","week":28,"ws":"Feb 02/26","we":"Feb 08/26","ch":"Wholesale: House Account","rev":2492.58,"mar":1255.47,"trx":5},{"fy":"2025/26","week":29,"ws":"Feb 09/26","we":"Feb 15/26","ch":"Corporate","rev":2744.38,"mar":1777.51,"trx":2},{"fy":"2025/26","week":29,"ws":"Feb 09/26","we":"Feb 15/26","ch":"Ecommerce","rev":12878.09,"mar":8941.68,"trx":195},{"fy":"2025/26","week":29,"ws":"Feb 09/26","we":"Feb 15/26","ch":"Grocery","rev":1422.4,"mar":772.33,"trx":6},{"fy":"2025/26","week":29,"ws":"Feb 09/26","we":"Feb 15/26","ch":"POS","rev":743.07,"mar":482.18,"trx":9},{"fy":"2025/26","week":29,"ws":"Feb 09/26","we":"Feb 15/26","ch":"Wholesale: DYA","rev":8163.42,"mar":4190.14,"trx":11},{"fy":"2025/26","week":29,"ws":"Feb 09/26","we":"Feb 15/26","ch":"Wholesale: House Account","rev":4312.01,"mar":2170.85,"trx":6},{"fy":"2025/26","week":30,"ws":"Feb 16/26","we":"Feb 22/26","ch":"Corporate","rev":3857.86,"mar":2273.66,"trx":2},{"fy":"2025/26","week":30,"ws":"Feb 16/26","we":"Feb 22/26","ch":"Ecommerce","rev":13443.77,"mar":9676.81,"trx":154},{"fy":"2025/26","week":30,"ws":"Feb 16/26","we":"Feb 22/26","ch":"Grocery","rev":1488.89,"mar":757.87,"trx":8},{"fy":"2025/26","week":30,"ws":"Feb 16/26","we":"Feb 22/26","ch":"POS","rev":959.66,"mar":714.18,"trx":13},{"fy":"2025/26","week":30,"ws":"Feb 16/26","we":"Feb 22/26","ch":"Wholesale: DYA","rev":14051.49,"mar":6740.62,"trx":19},{"fy":"2025/26","week":30,"ws":"Feb 16/26","we":"Feb 22/26","ch":"Wholesale: House Account","rev":4187.2,"mar":2100.06,"trx":8},{"fy":"2025/26","week":31,"ws":"Feb 23/26","we":"Mar 01/26","ch":"Corporate","rev":3807.38,"mar":2201.54,"trx":3},{"fy":"2025/26","week":31,"ws":"Feb 23/26","we":"Mar 01/26","ch":"Ecommerce","rev":13718.48,"mar":9396.44,"trx":156},{"fy":"2025/26","week":31,"ws":"Feb 23/26","we":"Mar 01/26","ch":"Grocery","rev":1440.78,"mar":768.5,"trx":6},{"fy":"2025/26","week":31,"ws":"Feb 23/26","we":"Mar 01/26","ch":"POS","rev":891.93,"mar":616.97,"trx":15},{"fy":"2025/26","week":31,"ws":"Feb 23/26","we":"Mar 01/26","ch":"Wholesale: DYA","rev":10120.02,"mar":4501.92,"trx":16},{"fy":"2025/26","week":31,"ws":"Feb 23/26","we":"Mar 01/26","ch":"Wholesale: House Account","rev":3086.14,"mar":1666.06,"trx":4},{"fy":"2025/26","week":32,"ws":"Mar 02/26","we":"Mar 08/26","ch":"Corporate","rev":4547.11,"mar":3021.25,"trx":2},{"fy":"2025/26","week":32,"ws":"Mar 02/26","we":"Mar 08/26","ch":"Ecommerce","rev":13229.95,"mar":8799.61,"trx":199},{"fy":"2025/26","week":32,"ws":"Mar 02/26","we":"Mar 08/26","ch":"Grocery","rev":2212.96,"mar":1234.11,"trx":8},{"fy":"2025/26","week":32,"ws":"Mar 02/26","we":"Mar 08/26","ch":"POS","rev":946.92,"mar":692.68,"trx":10},{"fy":"2025/26","week":32,"ws":"Mar 02/26","we":"Mar 08/26","ch":"Wholesale: DYA","rev":8813.08,"mar":4418.79,"trx":11},{"fy":"2025/26","week":32,"ws":"Mar 02/26","we":"Mar 08/26","ch":"Wholesale: House Account","rev":3329.46,"mar":1682.64,"trx":6}];
+
+// Build lookup: fy -> week -> channel -> {rev, mar, trx}
+function buildLookup(data) {
+  const lk = {};
+  data.forEach(r => {
+    if (!lk[r.fy]) lk[r.fy] = {};
+    if (!lk[r.fy][r.week]) lk[r.fy][r.week] = {};
+    lk[r.fy][r.week][r.ch] = {rev:r.rev, mar:r.mar, trx:r.trx, ws:r.ws, we:r.we};
+  });
+  return lk;
+}
+const LK = buildLookup(RAW);
+
+// Get available weeks for selector
+const weekOptions = [];
+Object.keys(LK).sort().forEach(fy => {
+  Object.keys(LK[fy]).map(Number).sort((a,b)=>a-b).forEach(w => {
+    const sample = LK[fy][w][CHANNELS[0]];
+    weekOptions.push({fy, week:w, label:`Week #${w} ${fy}`, ws:sample?.ws||'', we:sample?.we||''});
+  });
+});
+
+// Populate week selector (most recent first)
+const sel = document.getElementById('week-select');
+[...weekOptions].reverse().forEach(o => {
+  const opt = document.createElement('option');
+  opt.value = `${o.fy}|${o.week}`;
+  opt.textContent = `${o.label} (${o.ws}–${o.we})`;
+  sel.appendChild(opt);
+});
+
+// Channel legend
+const legend = document.getElementById('channel-legend');
+CHANNELS.forEach(ch => {
+  const d = document.createElement('div');
+  d.className = 'legend-item';
+  d.innerHTML = `<span class="legend-dot" style="background:${CHANNEL_COLORS[ch]}"></span><span class="legend-label">${ch}</span>`;
+  legend.appendChild(d);
+});
+
+function getWeekData(fy, week) {
+  return LK[fy]?.[week] || {};
+}
+function sumChannels(weekData) {
+  let rev=0, mar=0, trx=0;
+  CHANNELS.forEach(ch => { if(weekData[ch]){rev+=weekData[ch].rev;mar+=weekData[ch].mar;trx+=weekData[ch].trx;} });
+  return {rev, mar, trx};
+}
+function getYTD(fy, throughWeek) {
+  const ytd = {};
+  CHANNELS.forEach(ch => ytd[ch]={rev:0,mar:0,trx:0});
+  for (let w=1; w<=throughWeek; w++) {
+    const wd = LK[fy]?.[w] || {};
+    CHANNELS.forEach(ch => {
+      if(wd[ch]){ ytd[ch].rev+=wd[ch].rev; ytd[ch].mar+=wd[ch].mar; ytd[ch].trx+=wd[ch].trx; }
+    });
+  }
+  return ytd;
+}
+
+// Prior FY mapping
+function priorFY(fy) {
+  const [a,b] = fy.split('/');
+  return `${parseInt(a)-1}/${parseInt(b)-1}`;
+}
+
+function deltaBadge(cy, py) {
+  if (!py || py===0) return '<span class="delta flat">n/a</span>';
+  const p=(cy-py)/Math.abs(py)*100, up=p>=0;
+  return `<span class="delta ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(p).toFixed(1)}%</span>`;
+}
+function compCell(cy, py) {
+  if (!py || py===0) return '<span class="comp-na">n/a</span>';
+  const p=(cy-py)/Math.abs(py)*100, up=p>=0;
+  return `<span class="${up?'comp-pos':'comp-neg'}">${up?'▲':'▼'} ${Math.abs(p).toFixed(1)}%</span>`;
+}
+
+function destroyChart(id) { if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];} }
+
+function applyWeek() {
+  const val = document.getElementById('week-select').value;
+  const [fy, wStr] = val.split('|');
+  const week = parseInt(wStr);
+  const pfy = priorFY(fy);
+  const lwWeek = week - 1;
+
+  const twData = getWeekData(fy, week);
+  const lwData = lwWeek > 0 ? getWeekData(fy, lwWeek) : {};
+  const lyData = getWeekData(pfy, week);
+  const twTot = sumChannels(twData);
+  const lwTot = sumChannels(lwData);
+  const lyTot = sumChannels(lyData);
+
+  const ytdCY = getYTD(fy, week);
+  const ytdLY = getYTD(pfy, week);
+
+  // Sample week info
+  const sample = twData[CHANNELS[0]] || {};
+  const ws = sample.ws || '—';
+  const we = sample.we || '—';
+
+  // Header
+  document.getElementById('hdr-week-tag').textContent = `Week #${week}`;
+  document.getElementById('hdr-dates').textContent = `${ws} — ${we}`;
+  document.getElementById('hdr-fy').textContent = `FY ${fy}`;
+
+  // KPIs
+  document.getElementById('kpi-rev').textContent = fmtK(twTot.rev);
+  document.getElementById('kpi-rev-lw-d').outerHTML = `<span class="delta ${lwTot.rev?((twTot.rev>=lwTot.rev)?'up':'down'):'flat'}" id="kpi-rev-lw-d">${lwTot.rev?((twTot.rev>=lwTot.rev?'▲':'▼')+' '+Math.abs((twTot.rev-lwTot.rev)/lwTot.rev*100).toFixed(1)+'%'):'—'}</span>`;
+  document.getElementById('kpi-rev-lw-vs').textContent = `vs LW ${fmtK(lwTot.rev)}`;
+  document.getElementById('kpi-rev-ly-d').outerHTML = `<span class="delta ${lyTot.rev?((twTot.rev>=lyTot.rev)?'up':'down'):'flat'}" id="kpi-rev-ly-d">${lyTot.rev?((twTot.rev>=lyTot.rev?'▲':'▼')+' '+Math.abs((twTot.rev-lyTot.rev)/lyTot.rev*100).toFixed(1)+'%'):'—'}</span>`;
+  document.getElementById('kpi-rev-ly-vs').textContent = `vs LY ${fmtK(lyTot.rev)}`;
+
+  document.getElementById('kpi-mar').textContent = fmtK(twTot.mar);
+  document.getElementById('kpi-mar-d').outerHTML = `<span class="delta ${lwTot.mar?((twTot.mar>=lwTot.mar)?'up':'down'):'flat'}" id="kpi-mar-d">${lwTot.mar?((twTot.mar>=lwTot.mar?'▲':'▼')+' '+Math.abs((twTot.mar-lwTot.mar)/lwTot.mar*100).toFixed(1)+'%'):'—'}</span>`;
+  document.getElementById('kpi-mar-vs').textContent = `vs LW ${fmtK(lwTot.mar)}`;
+  document.getElementById('kpi-mar-pct').textContent = `${(twTot.rev>0?twTot.mar/twTot.rev*100:0).toFixed(1)}% margin`;
+
+  document.getElementById('kpi-trx').textContent = fmtNum(twTot.trx);
+  document.getElementById('kpi-trx-d').outerHTML = `<span class="delta ${lwTot.trx?((twTot.trx>=lwTot.trx)?'up':'down'):'flat'}" id="kpi-trx-d">${lwTot.trx?((twTot.trx>=lwTot.trx?'▲':'▼')+' '+Math.abs((twTot.trx-lwTot.trx)/lwTot.trx*100).toFixed(1)+'%'):'—'}</span>`;
+  document.getElementById('kpi-trx-vs').textContent = `vs LW ${fmtNum(lwTot.trx)}`;
+  document.getElementById('kpi-trx-ly-d').outerHTML = `<span class="delta ${lyTot.trx?((twTot.trx>=lyTot.trx)?'up':'down'):'flat'}" id="kpi-trx-ly-d">${lyTot.trx?((twTot.trx>=lyTot.trx?'▲':'▼')+' '+Math.abs((twTot.trx-lyTot.trx)/lyTot.trx*100).toFixed(1)+'%'):'—'}</span>`;
+  document.getElementById('kpi-trx-ly-vs').textContent = `vs LY ${fmtNum(lyTot.trx)}`;
+
+  const asp = twTot.trx>0?twTot.rev/twTot.trx:0;
+  const aspLW = lwTot.trx>0?lwTot.rev/lwTot.trx:0;
+  document.getElementById('kpi-asp').textContent = fmtK(asp);
+  document.getElementById('kpi-asp-d').outerHTML = `<span class="delta ${aspLW?((asp>=aspLW)?'up':'down'):'flat'}" id="kpi-asp-d">${aspLW?((asp>=aspLW?'▲':'▼')+' '+Math.abs((asp-aspLW)/aspLW*100).toFixed(1)+'%'):'—'}</span>`;
+  document.getElementById('kpi-asp-vs').textContent = `vs LW ${fmtK(aspLW)}`;
+
+  // Channel bar chart
+  document.getElementById('ch-bar-sub').textContent = `Week #${week} ${fy} · TW vs LW vs LY`;
+  destroyChart('ch-bar');
+  CHARTS['ch-bar'] = new Chart(document.getElementById('chart-ch-bar').getContext('2d'), {
+    type:'bar',
+    data:{
+      labels: CHANNELS.map(c => c.replace('Wholesale: ','WS: ')),
+      datasets:[
+        {label:'TW', data:CHANNELS.map(c=>twData[c]?.rev||0), backgroundColor:CHANNELS.map(c=>CHANNEL_COLORS[c]), borderRadius:3},
+        {label:'LW', data:CHANNELS.map(c=>lwData[c]?.rev||0), backgroundColor:CHANNELS.map(c=>CHANNEL_COLORS[c]+'55'), borderRadius:3},
+        {label:'LY', data:CHANNELS.map(c=>lyData[c]?.rev||0), backgroundColor:CHANNELS.map(c=>CHANNEL_COLORS[c]+'22'), borderRadius:3, borderWidth:1, borderColor:CHANNELS.map(c=>CHANNEL_COLORS[c]+'88')}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Barlow',size:11,weight:'600'},padding:12,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtK(ctx.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{...tickSty,maxRotation:30}},y:{grid:{color:gridClr},ticks:{...tickSty,callback:v=>fmtK(v)}}}
+    }
+  });
+
+  // Pie chart
+  destroyChart('ch-pie');
+  CHARTS['ch-pie'] = new Chart(document.getElementById('chart-ch-pie').getContext('2d'), {
+    type:'doughnut',
+    data:{
+      labels:CHANNELS,
+      datasets:[{data:CHANNELS.map(c=>twData[c]?.rev||0), backgroundColor:CHANNELS.map(c=>CHANNEL_COLORS[c]), borderWidth:2, borderColor:'#fff'}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Barlow',size:10,weight:'600'},padding:8,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': '+fmtK(ctx.raw)+' ('+((ctx.raw/t)*100).toFixed(1)+'%)';}}}
+      }
+    }
+  });
+
+  // Scorecard table
+  const ytdRevCYTot = CHANNELS.reduce((s,c)=>(s+(ytdCY[c]?.rev||0)),0);
+  const ytdRevLYTot = CHANNELS.reduce((s,c)=>(s+(ytdLY[c]?.rev||0)),0);
+  const wsDYA = (twData['Wholesale: DYA']?.rev||0) + (twData['Wholesale: House Account']?.rev||0);
+  const lwDYA = (lwData['Wholesale: DYA']?.rev||0) + (lwData['Wholesale: House Account']?.rev||0);
+  const lyDYA = (lyData['Wholesale: DYA']?.rev||0) + (lyData['Wholesale: House Account']?.rev||0);
+  const ytdDYA = (ytdCY['Wholesale: DYA']?.rev||0) + (ytdCY['Wholesale: House Account']?.rev||0);
+  const ytdDYALY = (ytdLY['Wholesale: DYA']?.rev||0) + (ytdLY['Wholesale: House Account']?.rev||0);
+  const trxDYA = (twData['Wholesale: DYA']?.trx||0) + (twData['Wholesale: House Account']?.trx||0);
+  const trxDYALW = (lwData['Wholesale: DYA']?.trx||0) + (lwData['Wholesale: House Account']?.trx||0);
+
+  let rows = CHANNELS.map(ch => {
+    const tw=twData[ch]||{rev:0,mar:0,trx:0};
+    const lw=lwData[ch]||{rev:0,mar:0,trx:0};
+    const ly=lyData[ch]||{rev:0,mar:0,trx:0};
+    const cy=ytdCY[ch]||{rev:0};
+    const ly2=ytdLY[ch]||{rev:0};
+    const col=CHANNEL_COLORS[ch];
+    const asp2=tw.trx>0?tw.rev/tw.trx:0;
+    return `<tr>
+      <td class="fw7"><span class="ch-dot" style="background:${col}"></span>${ch}</td>
+      <td class="num fw7">${fmtK(tw.rev)}</td>
+      <td class="num">${fmtK(lw.rev)}</td>
+      <td class="num">${fmtK(ly.rev)}</td>
+      <td class="num">${compCell(tw.rev,lw.rev)}</td>
+      <td class="num">${compCell(tw.rev,ly.rev)}</td>
+      <td class="num fw7">${fmtK(cy.rev)}</td>
+      <td class="num">${fmtK(ly2.rev)}</td>
+      <td class="num">${compCell(cy.rev,ly2.rev)}</td>
+      <td class="num">${fmtNum(tw.trx)}</td>
+      <td class="num">${fmtNum(lw.trx)}</td>
+      <td class="num">${fmtK(asp2)}</td>
+    </tr>`;
+  }).join('');
+
+  // Total row
+  const ytdCYTot = CHANNELS.reduce((s,c)=>(s+(ytdCY[c]?.rev||0)),0);
+  const ytdLYTot = CHANNELS.reduce((s,c)=>(s+(ytdLY[c]?.rev||0)),0);
+  rows += `<tr class="total-row">
+    <td>TOTAL</td>
+    <td class="num">${fmtK(twTot.rev)}</td>
+    <td class="num">${fmtK(lwTot.rev)}</td>
+    <td class="num">${fmtK(lyTot.rev)}</td>
+    <td class="num">${compCell(twTot.rev,lwTot.rev)}</td>
+    <td class="num">${compCell(twTot.rev,lyTot.rev)}</td>
+    <td class="num">${fmtK(ytdCYTot)}</td>
+    <td class="num">${fmtK(ytdLYTot)}</td>
+    <td class="num">${compCell(ytdCYTot,ytdLYTot)}</td>
+    <td class="num">${fmtNum(twTot.trx)}</td>
+    <td class="num">${fmtNum(lwTot.trx)}</td>
+    <td class="num">${fmtK(twTot.trx>0?twTot.rev/twTot.trx:0)}</td>
+  </tr>`;
+
+  // Wholesale combined row
+  rows += `<tr class="wholesale-combined">
+    <td style="padding-left:28px;">↳ Wholesale Combined</td>
+    <td class="num">${fmtK(wsDYA)}</td>
+    <td class="num">${fmtK(lwDYA)}</td>
+    <td class="num">${fmtK(lyDYA)}</td>
+    <td class="num">${compCell(wsDYA,lwDYA)}</td>
+    <td class="num">${compCell(wsDYA,lyDYA)}</td>
+    <td class="num">${fmtK(ytdDYA)}</td>
+    <td class="num">${fmtK(ytdDYALY)}</td>
+    <td class="num">${compCell(ytdDYA,ytdDYALY)}</td>
+    <td class="num">${fmtNum(trxDYA)}</td>
+    <td class="num">${fmtNum(trxDYALW)}</td>
+    <td class="num">${fmtK(trxDYA>0?wsDYA/trxDYA:0)}</td>
+  </tr>`;
+
+  document.getElementById('scorecard-body').innerHTML = rows;
+  document.getElementById('scorecard-sub').textContent = `Week #${week} ${fy} · ${ws}–${we}`;
+
+  // 12-week trend
+  const trendWeeks = [];
+  for (let w = Math.max(1,week-11); w<=week; w++) trendWeeks.push(w);
+  const trendLabels = trendWeeks.map(w => {
+    const s = LK[fy]?.[w]?.[CHANNELS[0]];
+    return s ? `W${w}` : `W${w}`;
+  });
+  const trendCY = trendWeeks.map(w => sumChannels(getWeekData(fy,w)).rev);
+  const trendLY = trendWeeks.map(w => sumChannels(getWeekData(pfy,w)).rev);
+
+  destroyChart('trend');
+  CHARTS['trend'] = new Chart(document.getElementById('chart-trend').getContext('2d'), {
+    type:'bar',
+    data:{
+      labels: trendLabels,
+      datasets:[
+        {type:'bar', label:`FY ${fy}`, data:trendCY,
+          backgroundColor:trendWeeks.map(w=>w===week?'#111111':'rgba(17,17,17,0.14)'),
+          borderRadius:3, order:2},
+        {type:'line', label:`FY ${pfy}`, data:trendLY,
+          borderColor:'#00BC7E', backgroundColor:'rgba(0,188,126,0.06)',
+          borderWidth:2, pointRadius:3, tension:0.35, fill:true, order:1}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Barlow',size:11,weight:'600'},padding:12,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtK(ctx.raw)}}},
+      scales:{x:{grid:{display:false},ticks:tickSty},y:{grid:{color:gridClr},ticks:{...tickSty,callback:v=>fmtK(v)}}}
+    }
+  });
+
+  // YTD rows
+  const ytdRevTotal = CHANNELS.reduce((s,c)=>(s+(ytdCY[c]?.rev||0)),0);
+  const ytdMarTotal = CHANNELS.reduce((s,c)=>(s+(ytdCY[c]?.mar||0)),0);
+  const ytdRevLYTotal = CHANNELS.reduce((s,c)=>(s+(ytdLY[c]?.rev||0)),0);
+  const ytdMarLYTotal = CHANNELS.reduce((s,c)=>(s+(ytdLY[c]?.mar||0)),0);
+
+  document.getElementById('ytd-rev-rows').innerHTML = [...CHANNELS, '__total__'].map(ch => {
+    const isTotal = ch === '__total__';
+    const cy = isTotal ? ytdRevTotal : (ytdCY[ch]?.rev||0);
+    const ly = isTotal ? ytdRevLYTotal : (ytdLY[ch]?.rev||0);
+    const col = CHANNEL_COLORS[ch] || '#111';
+    const pct = ytdRevTotal>0 ? cy/ytdRevTotal*100 : 0;
+    return `<div class="ytd-row" ${isTotal?'style="border-top:2px solid var(--border);margin-top:4px;"':''}>
+      <div class="ytd-ch">
+        ${!isTotal?`<span class="ch-dot" style="background:${col}"></span>`:'<span style="width:8px;margin-right:7px;"></span>'}
+        <span ${isTotal?'style="font-weight:800;color:var(--black)"':''}>${isTotal?'Total':ch}</span>
+        ${!isTotal?`<span style="font-size:10px;color:var(--text-light);font-weight:500;">${pct.toFixed(0)}%</span>`:''}
+      </div>
+      <div class="ytd-vals">
+        <span class="ytd-cy" ${isTotal?'style="font-size:14px;"':''}>${fmtK(cy)}</span>
+        <span class="ytd-py">${fmtK(ly)}</span>
+        ${deltaBadge(cy,ly)}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ytd-mar-rows').innerHTML = [...CHANNELS, '__total__'].map(ch => {
+    const isTotal = ch === '__total__';
+    const cy = isTotal ? ytdMarTotal : (ytdCY[ch]?.mar||0);
+    const revCY = isTotal ? ytdRevTotal : (ytdCY[ch]?.rev||0);
+    const ly = isTotal ? ytdMarLYTotal : (ytdLY[ch]?.mar||0);
+    const col = CHANNEL_COLORS[ch] || '#111';
+    const mp = revCY>0?cy/revCY*100:0;
+    const col2 = mp>=60?'#008C5E':mp>=40?'#C49A3C':'#C21625';
+    return `<div class="ytd-row" ${isTotal?'style="border-top:2px solid var(--border);margin-top:4px;"':''}>
+      <div class="ytd-ch">
+        ${!isTotal?`<span class="ch-dot" style="background:${col}"></span>`:'<span style="width:8px;margin-right:7px;"></span>'}
+        <span ${isTotal?'style="font-weight:800;color:var(--black)"':''}>${isTotal?'Total':ch}</span>
+        ${!isTotal?`<span style="font-size:10px;font-weight:700;color:${col2}">${mp.toFixed(1)}%</span>`:''}
+      </div>
+      <div class="ytd-vals">
+        <span class="ytd-cy" ${isTotal?'style="font-size:14px;"':''}>${fmtK(cy)}</span>
+        <span class="ytd-py">${fmtK(ly)}</span>
+        ${deltaBadge(cy,ly)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyWeek();
+});
+</script>
+</body>
+</html>
